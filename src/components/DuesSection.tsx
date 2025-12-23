@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Player } from '../types';
 import { MONTHS } from '../constants';
-import { Check, X, Search, ChevronLeft, ChevronRight, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
+import { Check, Search, ChevronLeft, ChevronRight, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 
 interface DuesSectionProps {
   players: Player[];

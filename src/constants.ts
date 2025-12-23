@@ -1,4 +1,4 @@
-import { Player, Match, PhotoItem } from './types';
+import { Player, Match } from './types';
 
 // =================================================================================
 // ASSETS DEL EQUIPO - CLAN TEAM F.C.

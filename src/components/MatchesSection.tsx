@@ -1,6 +1,6 @@
 import React from 'react';
-import { MATCH_HISTORY, ASSETS } from '../constants';
-import { MapPin, Calendar, Trophy, ArrowRight } from 'lucide-react';
+import { MATCH_HISTORY } from '../constants';
+import { MapPin, Trophy, ArrowRight } from 'lucide-react';
 
 const MatchesSection: React.FC = () => {
   return (

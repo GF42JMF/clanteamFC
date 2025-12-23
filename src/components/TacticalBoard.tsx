@@ -286,7 +286,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
         }
     } else {
         // Select a token to start action
-        const clickedToken = tokens.find(t => t.id === tokenId);
         // Can select empty tokens too if we want to move players to empty spots
         setSelectedFieldTokenId(tokenId);
     }

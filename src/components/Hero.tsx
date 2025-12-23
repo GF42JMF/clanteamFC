@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ASSETS } from '../constants';
-import { Trophy, ChevronDown, Flame } from 'lucide-react';
+import { Trophy, ChevronDown } from 'lucide-react';
 
 const Hero: React.FC = () => {
   const [offset, setOffset] = useState(0);
