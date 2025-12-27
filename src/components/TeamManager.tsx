@@ -7,12 +7,13 @@ import TacticalBoard from './TacticalBoard';
 interface TeamManagerProps {
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
+  canViewTactics: boolean;
 }
 
 type FilterPos = 'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD';
 type SortType = 'NUMBER' | 'MVP';
 
-const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers }) => {
+const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewTactics }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [filterPos, setFilterPos] = useState<FilterPos>('ALL');
   const [sortType, setSortType] = useState<SortType>('NUMBER');
@@ -77,7 +78,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers }) => {
         </div>
         
         <div className="relative w-12 h-12 rounded-full bg-neutral-800 overflow-hidden mx-3 border-2 border-white/10 group-hover:border-clan-magenta transition-colors shrink-0">
-          <img src={player.image || ASSETS.players.default} className="w-full h-full object-cover" />
+          <img src={player.image || ASSETS.players.default} className="w-full h-full object-contain" />
         </div>
 
         <div className="flex-1 min-w-0 pr-4">
@@ -221,7 +222,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers }) => {
                     </div>
 
                     {/* 5. Player Image (Dual Layer for Fit) */}
-                    <div className="absolute top-16 right-0 left-0 bottom-32 z-10 flex items-end justify-center overflow-hidden">
+                    <div className="absolute top-16 right-0 left-0 bottom-32 z-10 flex items-center justify-center overflow-hidden">
                        
                        {/* Background Blur Layer to fill space if image is horizontal */}
                        <div 
@@ -233,7 +234,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers }) => {
                        <img 
                           src={selectedPlayer.image || ASSETS.players.default} 
                           alt={selectedPlayer.name}
-                          className="relative max-h-full max-w-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10"
+                          className="relative w-full h-full object-contain object-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10"
                        />
                     </div>
 
@@ -288,7 +289,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers }) => {
         </div>
 
         {/* TACTICAL BOARD SECTION */}
-        <TacticalBoard players={players} />
+        {canViewTactics && <TacticalBoard players={players} />}
 
       </div>
     </div>

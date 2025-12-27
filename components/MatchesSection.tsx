@@ -3,6 +3,16 @@ import { MATCH_HISTORY, ASSETS } from '../constants';
 import { MapPin, Calendar, Trophy, ArrowRight } from 'lucide-react';
 
 const MatchesSection: React.FC = () => {
+  const getOutcome = (result: string) => {
+    const [homeRaw, awayRaw] = result.split('-').map((score) => score.trim());
+    const home = Number.parseInt(homeRaw, 10);
+    const away = Number.parseInt(awayRaw, 10);
+    if (!Number.isFinite(home) || !Number.isFinite(away)) return 'Empate';
+    if (home > away) return 'Victoria';
+    if (home < away) return 'Derrota';
+    return 'Empate';
+  };
+
   return (
     <div className="bg-[#050505] py-24 px-4 relative overflow-hidden">
       
@@ -66,9 +76,13 @@ const MatchesSection: React.FC = () => {
 
                {/* Status */}
                <div className="p-2 md:p-4 md:w-32 bg-[#050505] flex flex-row md:flex-col justify-between md:justify-center items-center text-center border-t md:border-t-0 md:border-l border-white/5 gap-2">
-                  {match.win ? (
+                  {getOutcome(match.result) === 'Victoria' && (
                     <span className="w-auto px-3 md:px-0 md:w-full py-1 bg-green-500/10 text-green-500 text-[10px] font-bold uppercase rounded border border-green-500/20">Victoria</span>
-                  ) : (
+                  )}
+                  {getOutcome(match.result) === 'Empate' && (
+                    <span className="w-auto px-3 md:px-0 md:w-full py-1 bg-yellow-500/10 text-yellow-400 text-[10px] font-bold uppercase rounded border border-yellow-500/20">Empate</span>
+                  )}
+                  {getOutcome(match.result) === 'Derrota' && (
                     <span className="w-auto px-3 md:px-0 md:w-full py-1 bg-red-500/10 text-red-500 text-[10px] font-bold uppercase rounded border border-red-500/20">Derrota</span>
                   )}
                   

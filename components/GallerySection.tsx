@@ -5,11 +5,11 @@ import { Search, X, ZoomIn } from 'lucide-react';
 const GallerySection: React.FC = () => {
   // Mock Data mimicking the file structure requested
   const photos = [
-    { id: '1', url: ASSETS.teamPhoto, match: 'Mundialito Final', title: 'Campeones 2024' },
+    { id: '1', url: ASSETS.teamPhoto, match: 'Mundialito Final', title: 'Campeones 2025' },
     { id: '1b', url: ASSETS.teamPhotoCelebration, match: 'Mundialito Final', title: 'Festejo del Campeonato' },
-    { id: '2', url: ASSETS.players.nicolas, match: 'vs Los Galacticos', title: 'Nico Goal Celebration' },
-    { id: '3', url: ASSETS.players.julian, match: 'vs Los Galacticos', title: 'Julian Aerial' },
-    { id: '4', url: ASSETS.players.guilleF, match: 'vs Deportivo Birra', title: 'Guille Defense' },
+    { id: '2', url: ASSETS.players.nicolas, match: 'vs Inter de Montevideo', title: 'Nico' },
+    { id: '3', url: ASSETS.players.julian, match: 'vs Inter de Montevideo', title: 'Julian' },
+    { id: '4', url: ASSETS.players.guilleF, match: 'vs Real Bañil', title: 'Guille' },
   ];
 
   const [filter, setFilter] = useState('');
@@ -43,7 +43,7 @@ const GallerySection: React.FC = () => {
     <div className="bg-black py-16 px-4">
        <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-            <h2 className="font-display text-5xl text-white">GALERÍA <span className="text-clan-red">EPICA</span></h2>
+            <h2 className="font-display text-5xl text-white">GALERÍA <span className="text-clan-red"> </span></h2>
             
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
