@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { Player } from '../types';
 import { ASSETS } from '../constants';
 import { Trash2, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
@@ -78,7 +78,11 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
         </div>
         
         <div className="relative w-12 h-12 rounded-full bg-neutral-800 overflow-hidden mx-3 border-2 border-white/10 group-hover:border-clan-magenta transition-colors shrink-0">
-          <img src={player.image || ASSETS.players.default} className="w-full h-full object-contain" />
+          <img
+            src={player.image || ASSETS.players.default}
+            className="w-full h-full object-contain"
+            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+          />
         </div>
 
         <div className="flex-1 min-w-0 pr-4">
@@ -232,7 +236,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
 
                        {/* Foreground Main Image (Contain + Bottom) */}
                        <img 
-                          src={selectedPlayer.image || ASSETS.players.default} 
+                          src={selectedPlayer.image || ASSETS.players.default}
+                          onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
                           alt={selectedPlayer.name}
                           className="relative w-full h-full object-contain object-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10"
                        />
@@ -258,20 +263,30 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
                          </span>
                        </h3>
                        
-                       <div className="flex justify-between items-end border-t border-white/10 pt-4 mt-2">
-                          <div className="text-white/40 text-sm font-display uppercase tracking-widest">
-                             Players del Clan
+                       <div className="flex flex-col gap-3 border-t border-white/10 pt-4 mt-2">
+                          <div className="text-[9px] uppercase tracking-widest text-white/50">
+                             Posiciones: <span className="text-white">{selectedPlayer.positions?.join(', ') || selectedPlayer.position}</span>
                           </div>
                           
-                          {/* Mini Stats */}
-                          <div className="flex gap-4">
-                             <div className="text-center">
-                                <div className="text-clan-magenta font-display text-xl leading-none">{selectedPlayer.stats?.goals || 0}</div>
-                                <div className="text-[8px] text-gray-500 uppercase">Goles</div>
+                          <div className="flex justify-between items-end">
+                             <div className="text-white/40 text-sm font-display uppercase tracking-widest">
+                                Players del Clan
                              </div>
-                             <div className="text-center">
-                                <div className="text-white font-display text-xl leading-none">{selectedPlayer.stats?.matches || 0}</div>
-                                <div className="text-[8px] text-gray-500 uppercase">Part</div>
+                             
+                             {/* Mini Stats */}
+                             <div className="flex gap-4">
+                                <div className="text-center">
+                                   <div className="text-clan-magenta font-display text-xl leading-none">{selectedPlayer.stats?.goals || 0}</div>
+                                   <div className="text-[8px] text-gray-500 uppercase">Goles</div>
+                                </div>
+                                <div className="text-center">
+                                   <div className="text-white font-display text-xl leading-none">{selectedPlayer.stats?.matches || 0}</div>
+                                   <div className="text-[8px] text-gray-500 uppercase">Part</div>
+                                </div>
+                                <div className="text-center">
+                                   <div className="text-white font-display text-xl leading-none">{selectedPlayer.position}</div>
+                                   <div className="text-[8px] text-gray-500 uppercase">Pos</div>
+                                </div>
                              </div>
                           </div>
                        </div>
@@ -297,3 +312,4 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
 };
 
 export default TeamManager;
+

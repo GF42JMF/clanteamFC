@@ -5,6 +5,7 @@ export interface Player {
   phone: string;
   jerseyNumber: number;
   position: 'GK' | 'DEF' | 'MID' | 'FWD';
+  positions?: string[];
   image?: string;
   stats?: {
     goals: number;
@@ -12,6 +13,17 @@ export interface Player {
     matches: number;
     mvp: number;
   };
+}
+
+export type UserRole = 'public' | 'player' | 'admin';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  playerId?: string;
 }
 
 export interface Match {
@@ -23,6 +35,11 @@ export interface Match {
   scorers: { playerName: string; goals: number }[];
   location: string;
   mvp: string;
+  images?: string[];
+  eligiblePlayerIds?: string[];
+  voteCloseAt?: string;
+  votes?: Record<string, number>;
+  votedBy?: string[];
 }
 
 export interface PhotoItem {

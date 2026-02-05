@@ -19,6 +19,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const CREDENTIALS: Array<{ username: string; password: string; role: UserRole }> = [
   { username: 'admin', password: 'clanadmin2025', role: 'admin' },
+  { username: 'Maxi', password: 'chanchubbi', role: 'admin' },
   { username: 'jugador', password: 'clanjugador2025', role: 'player' },
 ];
 

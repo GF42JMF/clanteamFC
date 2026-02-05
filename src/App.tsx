@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Hero from './components/Hero';
 import TeamManager from './components/TeamManager';
 import MatchesSection from './components/MatchesSection';
 import GallerySection from './components/GallerySection';
 import DuesSection from './components/DuesSection';
+import MVPSection from './components/MVPSection';
+import AdminAccessPanel from './components/AdminAccessPanel';
 import { INITIAL_PLAYERS, ASSETS } from './constants';
-import { Player } from './types';
-import { LayoutDashboard, Users, Trophy, Image as ImageIcon, Wallet, Menu, X, Instagram } from 'lucide-react';
+import { Player, UserAccount, UserRole } from './types';
+import { LayoutDashboard, Users, Trophy, Image as ImageIcon, Wallet, Menu, X, Instagram, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-type UserRole = 'public' | 'player' | 'admin';
+type AuthMode = 'login' | 'register';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   public: 'Publico',
@@ -17,9 +19,12 @@ const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
 };
 
-const CREDENTIALS: Array<{ username: string; password: string; role: UserRole }> = [
-  { username: 'admin', password: 'clanadmin2025', role: 'admin' },
-  { username: 'jugador', password: 'clanjugador2025', role: 'player' },
+const USERS_STORAGE_KEY = 'clan_team_users';
+const CURRENT_USER_KEY = 'clan_team_current_user';
+
+const DEFAULT_USERS: UserAccount[] = [
+  { id: 'u-admin', username: 'admin', email: 'gfontes32@gmail.com', password: 'clanadmin2025', role: 'admin' },
+  { id: 'u-player', username: 'jugador', email: 'jugador@clan.team', password: 'clanjugador2025', role: 'player' },
 ];
 
 const App: React.FC = () => {
@@ -27,32 +32,59 @@ const App: React.FC = () => {
   // 'dues' is the separate Dues page
   const [viewMode, setViewMode] = useState<'landing' | 'dues'>('landing');
 
-  const [role, setRole] = useState<UserRole>('public');
+  const [users, setUsers] = useState<UserAccount[]>(() => {
+    const saved = localStorage.getItem(USERS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved) as UserAccount[];
+      } catch (err) {
+        console.error('No se pudo leer los usuarios.', err);
+      }
+    }
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+    return DEFAULT_USERS;
+  });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
+    return localStorage.getItem(CURRENT_USER_KEY);
+  });
+  const currentUser = useMemo(() => users.find((user) => user.id === currentUserId) || null, [users, currentUserId]);
+  const role: UserRole = currentUser?.role ?? 'public';
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [loginId, setLoginId] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  
+
   // Controls the Highlighted Pill in Nav
   const [activeNavId, setActiveNavId] = useState('home');
-  
+
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // Lock to prevent spy update during click-scroll animation
   const isManualScrolling = useRef(false);
 
   useEffect(() => {
-    const storedRole = localStorage.getItem('clan_team_role');
-    if (storedRole === 'admin' || storedRole === 'player') {
-      setRole(storedRole);
-    }
-  }, []);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
-    localStorage.setItem('clan_team_role', role);
-  }, [role]);
+    if (currentUserId) {
+      localStorage.setItem(CURRENT_USER_KEY, currentUserId);
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (currentUserId && !currentUser) {
+      setCurrentUserId(null);
+    }
+  }, [currentUserId, currentUser]);
 
   useEffect(() => {
     if (role !== 'admin' && viewMode === 'dues') {
@@ -80,13 +112,19 @@ const App: React.FC = () => {
     // Only run scroll spy on landing page
     if (viewMode !== 'landing') return;
 
-    const sections = ['home-section', 'club-section', 'team-section', 'matches-section', 'gallery-section'];
+    const sections = ['home-section', 'club-section', 'team-section', 'matches-section'];
+    if (role !== 'public') sections.push('mvp-section');
+    sections.push('gallery-section');
+    if (role === 'admin') sections.push('access-section');
+
     const navMap: Record<string, string> = {
       'home-section': 'home',
       'club-section': 'club',
       'team-section': 'team',
       'matches-section': 'matches',
-      'gallery-section': 'gallery'
+      'mvp-section': 'mvp',
+      'gallery-section': 'gallery',
+      'access-section': 'access'
     };
 
     const observerOptions = {
@@ -96,7 +134,7 @@ const App: React.FC = () => {
       // Top: -30% (Ignore top 30%)
       // Bottom: -69% (Ignore bottom 69%)
       // Result: A 1% height "tripwire" zone. Only one section can effectively be in this zone at a time.
-      rootMargin: '-30% 0px -69% 0px', 
+      rootMargin: '-30% 0px -69% 0px',
       threshold: 0
     };
 
@@ -122,16 +160,23 @@ const App: React.FC = () => {
     });
 
     return () => observer.disconnect();
-  }, [viewMode]);
+  }, [viewMode, role]);
 
   const navItems = [
     { id: 'home', label: 'Inicio', icon: LayoutDashboard },
     { id: 'club', label: 'El Club', icon: Trophy },
     { id: 'team', label: 'Plantilla', icon: Users },
     { id: 'matches', label: 'Resultados', icon: Trophy },
+    { id: 'mvp', label: 'MVP', icon: Trophy },
     { id: 'gallery', label: 'Media', icon: ImageIcon },
+    { id: 'access', label: 'Accesos', icon: Shield },
     { id: 'dues', label: 'Cuotas', icon: Wallet },
-  ].filter((item) => (item.id === 'dues' ? role === 'admin' : true));
+  ].filter((item) => {
+    if (item.id === 'dues') return role === 'admin';
+    if (item.id === 'mvp') return role !== 'public';
+    if (item.id === 'access') return role === 'admin';
+    return true;
+  });
 
   const handleNavClick = (id: string) => {
     setIsMobileMenuOpen(false);
@@ -146,7 +191,7 @@ const App: React.FC = () => {
       setActiveNavId('dues');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      
+
       // If switching from Dues to Landing
       if (viewMode === 'dues') {
         setViewMode('landing');
@@ -165,9 +210,9 @@ const App: React.FC = () => {
           // Lock observer
           isManualScrolling.current = true;
           setActiveNavId(id); // Instant visual update
-          
+
           element.scrollIntoView({ behavior: 'smooth' });
-          
+
           // Unlock after animation (approx 800ms)
           setTimeout(() => {
             isManualScrolling.current = false;
@@ -175,44 +220,81 @@ const App: React.FC = () => {
         }
       }
     }
-  }
+  };
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
-    const match = CREDENTIALS.find(
+    const match = users.find(
       (entry) =>
-        entry.username.trim().toLowerCase() === username.trim().toLowerCase() &&
+        (entry.username.trim().toLowerCase() === loginId.trim().toLowerCase() ||
+          entry.email.trim().toLowerCase() === loginId.trim().toLowerCase()) &&
         entry.password === password
     );
     if (!match) {
       setAuthError('Usuario o contraseña incorrectos.');
       return;
     }
-    setRole(match.role);
+    setCurrentUserId(match.id);
     setIsAuthOpen(false);
-    setUsername('');
+    setLoginId('');
     setPassword('');
     setAuthError('');
   };
 
-  const handleLogout = () => {
-    setRole('public');
+  const handleRegister = (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthError('');
+
+    if (!username || !email || !password) {
+      setAuthError('Completa usuario, email y contraseña.');
+      return;
+    }
+
+    const exists = users.some(
+      (user) =>
+        user.username.trim().toLowerCase() === username.trim().toLowerCase() ||
+        user.email.trim().toLowerCase() === email.trim().toLowerCase()
+    );
+
+    if (exists) {
+      setAuthError('Ese usuario o email ya existe.');
+      return;
+    }
+
+    const newUser: UserAccount = {
+      id: `u-${Date.now()}`,
+      username,
+      email,
+      password,
+      role: 'player'
+    };
+
+    setUsers((prev) => [...prev, newUser]);
+    setCurrentUserId(newUser.id);
     setIsAuthOpen(false);
     setUsername('');
+    setEmail('');
+    setPassword('');
+  };
+
+  const handleLogout = () => {
+    setCurrentUserId(null);
+    setIsAuthOpen(false);
+    setLoginId('');
     setPassword('');
     setAuthError('');
   };
 
   return (
     <div className="bg-clan-black min-h-screen text-white font-sans selection:bg-clan-magenta selection:text-white">
-      
+
       {/* Navigation */}
-      <nav 
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#050505]/90 backdrop-blur-md py-3 border-b border-white/5' : 'bg-transparent py-6'}`}
+      <nav
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#050505]/95 backdrop-blur-md py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-transparent py-6'}`}
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center">
-            
+
             {/* Logo */}
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNavClick('home')}>
               <img src={ASSETS.logo} alt="Clan Team" className="h-10 w-10 md:h-12 md:w-12 object-contain group-hover:scale-110 transition-transform" />
@@ -223,14 +305,14 @@ const App: React.FC = () => {
             </div>
 
             {/* Desktop Menu with Animated Sliding Pill */}
-            <div className="hidden md:flex items-center gap-1 bg-black/40 p-1 rounded-full border border-white/5 backdrop-blur-sm shadow-xl">
+            <div className="hidden md:flex items-center gap-1.5 bg-black/40 p-1 rounded-full border border-white/5 backdrop-blur-sm shadow-xl overflow-x-auto max-w-full">
               {navItems.map((item) => {
                 const isActive = activeNavId === item.id;
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className={`relative px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-colors duration-300 z-10 ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                    className={`relative px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 z-10 ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     {isActive && (
                       <motion.div
@@ -247,9 +329,9 @@ const App: React.FC = () => {
 
             {/* Social / Action */}
             <div className="hidden md:flex items-center gap-4">
-               <a 
-                 href="https://www.instagram.com/clanteamfc" 
-                 target="_blank" 
+               <a
+                 href="https://www.instagram.com/clanteamfc"
+                 target="_blank"
                  rel="noopener noreferrer"
                  className="text-gray-400 hover:text-clan-magenta transition-colors"
                 >
@@ -260,7 +342,7 @@ const App: React.FC = () => {
                   <span className="text-white">{ROLE_LABELS[role]}</span>
                </div>
                <button
-                 onClick={() => { setIsAuthOpen(true); setAuthError(''); }}
+                 onClick={() => { setIsAuthOpen(true); setAuthError(''); setAuthMode('login'); }}
                  className="px-4 py-2 text-xs uppercase tracking-widest font-bold rounded-full border border-white/10 text-white hover:border-clan-magenta hover:text-clan-magenta transition-colors"
                >
                  {role === 'public' ? 'Acceder' : 'Cambiar acceso'}
@@ -300,7 +382,7 @@ const App: React.FC = () => {
                 Rol <span className="text-white ml-2">{ROLE_LABELS[role]}</span>
               </div>
               <button
-                onClick={() => { setIsAuthOpen(true); setAuthError(''); }}
+                onClick={() => { setIsAuthOpen(true); setAuthError(''); setAuthMode('login'); }}
                 className="px-4 py-2 text-xs uppercase tracking-widest font-bold rounded-full border border-white/10 text-white"
               >
                 {role === 'public' ? 'Acceder' : 'Cambiar'}
@@ -318,9 +400,9 @@ const App: React.FC = () => {
             )}
             {/* Mobile Social */}
             <div className="p-6 flex gap-6 justify-center bg-black/50">
-                <a 
-                 href="https://www.instagram.com/clanteamfc" 
-                 target="_blank" 
+                <a
+                 href="https://www.instagram.com/clanteamfc"
+                 target="_blank"
                  rel="noopener noreferrer"
                  className="text-gray-400 hover:text-clan-magenta transition-colors"
                 >
@@ -358,6 +440,7 @@ const App: React.FC = () => {
                       src={ASSETS.clubLogos.old}
                       alt="Logo antiguo"
                       className="w-48 h-48 object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+                      onError={(e) => { e.currentTarget.src = ASSETS.logo; }}
                     />
                   </div>
                   <div className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center">
@@ -366,16 +449,23 @@ const App: React.FC = () => {
                       src={ASSETS.clubLogos.renewed}
                       alt="Logo renovado"
                       className="w-48 h-48 object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+                      onError={(e) => { e.currentTarget.src = ASSETS.logo; }}
                     />
                   </div>
                 </div>
               </div>
             </section>
-            
-            {/* Reordered to match Nav: Home -> Team -> Matches -> Gallery */}
+
+            {/* Reordered to match Nav: Home -> Team -> Matches -> MVP -> Gallery */}
             <div id="team-section"><TeamManager players={players} setPlayers={setPlayers} canViewTactics={role !== 'public'} /></div>
-            <div id="matches-section"><MatchesSection /></div>
+            <div id="matches-section"><MatchesSection role={role} players={players} /></div>
+            {role !== 'public' && (
+              <MVPSection role={role} currentUser={currentUser} players={players} />
+            )}
             <div id="gallery-section"><GallerySection /></div>
+            {role === 'admin' && (
+              <AdminAccessPanel users={users} setUsers={setUsers} players={players} />
+            )}
           </>
         ) : (
           <div className="pt-24 animate-fade-in">
@@ -403,38 +493,98 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleLogin} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Usuario</label>
-                <input
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
-                  placeholder="Tu usuario"
-                  autoComplete="username"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Contrasena</label>
-                <input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  type="password"
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
-                  placeholder="Tu contrasena"
-                  autoComplete="current-password"
-                />
-              </div>
-              {authError && (
-                <div className="text-xs text-red-400">{authError}</div>
-              )}
+            <div className="mt-6 flex gap-2">
               <button
-                type="submit"
-                className="w-full bg-clan-magenta hover:bg-pink-700 text-white font-display text-lg uppercase py-3 tracking-wider transition-colors rounded-lg"
+                onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                className={`flex-1 px-3 py-2 rounded-lg text-xs uppercase tracking-widest font-bold ${authMode === 'login' ? 'bg-clan-magenta text-white' : 'bg-black/40 text-gray-400 border border-white/10'}`}
               >
                 Ingresar
               </button>
-            </form>
+              <button
+                onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                className={`flex-1 px-3 py-2 rounded-lg text-xs uppercase tracking-widest font-bold ${authMode === 'register' ? 'bg-clan-magenta text-white' : 'bg-black/40 text-gray-400 border border-white/10'}`}
+              >
+                Registrarse
+              </button>
+            </div>
+
+            {authMode === 'login' ? (
+              <form onSubmit={handleLogin} className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Usuario o email</label>
+                  <input
+                    value={loginId}
+                    onChange={(event) => setLoginId(event.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
+                    placeholder="Tu usuario o email"
+                    autoComplete="username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Contraseña</label>
+                  <input
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    type="password"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
+                    placeholder="Tu contraseña"
+                    autoComplete="current-password"
+                  />
+                </div>
+                {authError && (
+                  <div className="text-xs text-red-400">{authError}</div>
+                )}
+                <button
+                  type="submit"
+                  className="w-full bg-clan-magenta hover:bg-pink-700 text-white font-display text-lg uppercase py-3 tracking-wider transition-colors rounded-lg"
+                >
+                  Ingresar
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Usuario</label>
+                  <input
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
+                    placeholder="Tu usuario"
+                    autoComplete="username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Email</label>
+                  <input
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
+                    placeholder="tu@email.com"
+                    autoComplete="email"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2">Contraseña</label>
+                  <input
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    type="password"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-clan-magenta"
+                    placeholder="Crea una contraseña"
+                    autoComplete="new-password"
+                  />
+                </div>
+                {authError && (
+                  <div className="text-xs text-red-400">{authError}</div>
+                )}
+                <button
+                  type="submit"
+                  className="w-full bg-clan-magenta hover:bg-pink-700 text-white font-display text-lg uppercase py-3 tracking-wider transition-colors rounded-lg"
+                >
+                  Registrarme
+                </button>
+              </form>
+            )}
 
             {role !== 'public' && (
               <button
@@ -456,11 +606,11 @@ const App: React.FC = () => {
           <p className="text-gray-500 mb-8 max-w-md">
             Since 2023
           </p>
-          
+
           <div className="flex gap-6 mb-8">
-             <a 
-               href="https://www.instagram.com/clanteamfc" 
-               target="_blank" 
+             <a
+               href="https://www.instagram.com/clanteamfc"
+               target="_blank"
                rel="noopener noreferrer"
                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-clan-magenta hover:text-white transition-colors cursor-pointer"
               >
@@ -478,3 +628,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+

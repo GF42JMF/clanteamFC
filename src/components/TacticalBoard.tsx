@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Player } from '../types';
 import { ASSETS, STAFF_MEMBERS } from '../constants';
 import { Users, RefreshCw, ChevronRight, Shield, User, X, Trash2, Zap, LayoutTemplate, ArrowRightLeft, Download, Save } from 'lucide-react';
@@ -49,131 +49,6 @@ type FormationKey = keyof typeof FORMATIONS;
 const STORAGE_KEY_TOKENS = 'clan_team_tactics_tokens';
 const STORAGE_KEY_FORMATION = 'clan_team_tactics_formation';
 
-const ATTRIBUTE_GROUPS = [
-  {
-    title: 'Atributos Tecnicos',
-    items: ['Control de Balon', 'Pase', 'Regate', 'Precision', 'Potencia']
-  },
-  {
-    title: 'Atributos Fisicos',
-    items: ['Resistencia', 'Velocidad', 'Fuerza']
-  },
-  {
-    title: 'Atributos Mentales',
-    items: ['Concentracion', 'Resiliencia', 'Confianza', 'Liderazgo', 'Motivacion']
-  },
-  {
-    title: 'Atributos Tacticos',
-    items: ['Inteligencia Tactica', 'Posicionamiento', 'Vision de juego', 'Trabajo en equipo']
-  },
-  {
-    title: 'Atributos de Personalidad',
-    items: ['Afabilidad', 'Determinacion', 'Humildad']
-  }
-];
-
-const ATTRIBUTE_PRESETS: Record<Player['position'], Record<string, number>> = {
-  GK: {
-    'Control de Balon': 6,
-    Pase: 7,
-    Regate: 3,
-    Precision: 6,
-    Potencia: 6,
-    Resistencia: 6,
-    Velocidad: 5,
-    Fuerza: 7,
-    Concentracion: 8,
-    Resiliencia: 7,
-    Confianza: 7,
-    Liderazgo: 6,
-    Motivacion: 7,
-    'Inteligencia Tactica': 7,
-    Posicionamiento: 8,
-    'Vision de juego': 6,
-    'Trabajo en equipo': 6,
-    Afabilidad: 6,
-    Determinacion: 7,
-    Humildad: 7
-  },
-  DEF: {
-    'Control de Balon': 6,
-    Pase: 6,
-    Regate: 4,
-    Precision: 6,
-    Potencia: 7,
-    Resistencia: 7,
-    Velocidad: 6,
-    Fuerza: 8,
-    Concentracion: 7,
-    Resiliencia: 7,
-    Confianza: 6,
-    Liderazgo: 7,
-    Motivacion: 7,
-    'Inteligencia Tactica': 7,
-    Posicionamiento: 8,
-    'Vision de juego': 6,
-    'Trabajo en equipo': 8,
-    Afabilidad: 6,
-    Determinacion: 8,
-    Humildad: 6
-  },
-  MID: {
-    'Control de Balon': 8,
-    Pase: 8,
-    Regate: 7,
-    Precision: 7,
-    Potencia: 6,
-    Resistencia: 8,
-    Velocidad: 7,
-    Fuerza: 6,
-    Concentracion: 7,
-    Resiliencia: 6,
-    Confianza: 7,
-    Liderazgo: 6,
-    Motivacion: 7,
-    'Inteligencia Tactica': 8,
-    Posicionamiento: 7,
-    'Vision de juego': 8,
-    'Trabajo en equipo': 8,
-    Afabilidad: 6,
-    Determinacion: 7,
-    Humildad: 6
-  },
-  FWD: {
-    'Control de Balon': 7,
-    Pase: 6,
-    Regate: 8,
-    Precision: 8,
-    Potencia: 8,
-    Resistencia: 7,
-    Velocidad: 8,
-    Fuerza: 6,
-    Concentracion: 6,
-    Resiliencia: 6,
-    Confianza: 8,
-    Liderazgo: 6,
-    Motivacion: 7,
-    'Inteligencia Tactica': 7,
-    Posicionamiento: 7,
-    'Vision de juego': 6,
-    'Trabajo en equipo': 6,
-    Afabilidad: 6,
-    Determinacion: 7,
-    Humildad: 5
-  }
-};
-
-const buildAttributeProfile = (position: Player['position']) => {
-  const preset = ATTRIBUTE_PRESETS[position];
-  return ATTRIBUTE_GROUPS.map(group => ({
-    title: group.title,
-    items: group.items.map(label => ({
-      label,
-      value: preset[label] ?? 5
-    }))
-  }));
-};
-
 const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
   // Initialize state from LocalStorage if available
   const [tokens, setTokens] = useState<FieldToken[]>(() => {
@@ -194,13 +69,14 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 
   const [selectedBenchPlayer, setSelectedBenchPlayer] = useState<string | null>(null);
   const [selectedFieldTokenId, setSelectedFieldTokenId] = useState<string | null>(null); // New state for on-field swap
-  const [selectedAttributePlayerId, setSelectedAttributePlayerId] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   
   const fieldRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [dragMoved, setDragMoved] = useState(false);
+  const dragFrameRef = useRef<number | null>(null);
+  const pendingDragRef = useRef<{ id: string; x: number; y: number } | null>(null);
 
   // Auto-fill slots on first load if empty and no storage
   useEffect(() => {
@@ -242,11 +118,10 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
   };
 
   const handleClearBoard = () => {
-    if(confirm('¿Limpiar toda la pizarra?')) {
+    if(confirm('Â¿Limpiar toda la pizarra?')) {
       setTokens(prev => prev.map(t => ({ ...t, playerId: null })));
       setSelectedFieldTokenId(null);
       setSelectedBenchPlayer(null);
-      setSelectedAttributePlayerId(null);
     }
   };
 
@@ -269,10 +144,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
     e.stopPropagation(); 
     setTokens(prev => prev.map(t => t.id === tokenId ? { ...t, playerId: null } : t));
     if (selectedFieldTokenId === tokenId) setSelectedFieldTokenId(null);
-    const removedToken = tokens.find(t => t.id === tokenId);
-    if (removedToken?.playerId && selectedAttributePlayerId === removedToken.playerId) {
-      setSelectedAttributePlayerId(null);
-    }
   };
 
   const handleDownloadPDF = async () => {
@@ -328,7 +199,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
       // Add Title
       pdf.setFontSize(24);
       pdf.setTextColor(194, 24, 91); // Clan Magenta
-      pdf.text('CLAN TEAM F.C. - FORMACIÓN TÁCTICA', pdfWidth / 2, 15, { align: 'center' });
+      pdf.text('CLAN TEAM F.C. - FORMACIÃ“N TÃCTICA', pdfWidth / 2, 15, { align: 'center' });
       
       pdf.addImage(imgData, 'JPEG', x, y + 5, width, height);
       
@@ -336,7 +207,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert('Error al generar el PDF. Verifica que las imágenes carguen correctamente.');
+      alert('Error al generar el PDF. Verifica que las imÃ¡genes carguen correctamente.');
     } finally {
       setIsDownloading(false);
     }
@@ -346,6 +217,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 
   const handlePointerDown = (e: React.PointerEvent, tokenId: string) => {
     e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     setIsDragging(tokenId);
     setDragMoved(false);
   };
@@ -362,16 +234,29 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
     const clampedX = Math.max(0, Math.min(100, x));
     const clampedY = Math.max(0, Math.min(100, y));
 
-    setTokens(prev => prev.map(t => t.id === isDragging ? { ...t, x: clampedX, y: clampedY } : t));
+    pendingDragRef.current = { id: isDragging, x: clampedX, y: clampedY };
+    if (dragFrameRef.current === null) {
+      dragFrameRef.current = window.requestAnimationFrame(() => {
+        const next = pendingDragRef.current;
+        if (next) {
+          setTokens(prev => prev.map(t => t.id === next.id ? { ...t, x: next.x, y: next.y } : t));
+        }
+        dragFrameRef.current = null;
+      });
+    }
   };
 
   const handlePointerUp = () => {
     setIsDragging(null);
+    if (dragFrameRef.current !== null) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
   };
 
   // --- SELECTION & SWAP LOGIC ---
 
-  const handleTokenClick = (tokenId: string, playerId: string | null) => {
+  const handleTokenClick = (tokenId: string) => {
     if (dragMoved) return; // Ignore click if it was a drag
 
     // MODE 1: SUBSTITUTION (Bench -> Field)
@@ -388,7 +273,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
         return t;
       }));
       setSelectedBenchPlayer(null); 
-      setSelectedAttributePlayerId(selectedBenchPlayer);
       return;
     }
 
@@ -397,7 +281,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
         if (selectedFieldTokenId === tokenId) {
             // Deselect if clicking self
             setSelectedFieldTokenId(null);
-            setSelectedAttributePlayerId(playerId);
         } else {
             // EXECUTE SWAP
             setTokens(prev => {
@@ -416,13 +299,11 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                 });
             });
             setSelectedFieldTokenId(null);
-            setSelectedAttributePlayerId(playerId);
         }
     } else {
         // Select a token to start action
         // Can select empty tokens too if we want to move players to empty spots
         setSelectedFieldTokenId(tokenId);
-        setSelectedAttributePlayerId(playerId);
     }
   };
 
@@ -467,7 +348,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
            <button 
              onClick={handleAutoFill}
              className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40 rounded transition-colors border border-green-900/30"
-             title="Rellenar huecos vacíos"
+             title="Rellenar huecos vacÃ­os"
            >
              <Zap size={14} /> Auto
            </button>
@@ -525,7 +406,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
            {/* TOKENS */}
            {tokens.map((token) => {
              const player = getPlayer(token.playerId);
-             const attributes = player ? buildAttributeProfile(player.position) : [];
              
              // Highlighting Logic
              const isSubstitutionTarget = !!selectedBenchPlayer; 
@@ -536,15 +416,16 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                <div
                  key={token.id}
                  onPointerDown={(e) => handlePointerDown(e, token.id)}
-                 onClick={() => handleTokenClick(token.id, token.playerId)}
-                 className={`absolute w-16 h-16 md:w-24 md:h-24 -ml-8 -mt-8 md:-ml-12 md:-mt-12 rounded-full transition-all duration-300
+                 onClick={() => handleTokenClick(token.id)}
+                 className={`absolute w-16 h-16 md:w-24 md:h-24 -ml-8 -mt-8 md:-ml-12 md:-mt-12 rounded-full ${isDragging === token.id ? 'transition-none' : 'transition-all duration-300'}
                     ${isDragging === token.id ? 'z-50 scale-125 cursor-grabbing' : 'z-10 cursor-pointer hover:z-40'}
                     ${isSubstitutionTarget && !player ? 'animate-pulse' : ''}
                     ${isFieldSwapSelected ? 'z-50 scale-110' : ''}
                  `}
                  style={{ 
                    left: `${token.x}%`, 
-                   top: `${token.y}%` 
+                   top: `${token.y}%`,
+                   willChange: isDragging === token.id ? 'left, top, transform' : 'auto'
                  }}
                >
                   {/* Token Body */}
@@ -570,6 +451,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                             src={player.image || ASSETS.players.default} 
                             crossOrigin="anonymous"
                             className="w-full h-full object-cover object-top transform scale-110 pointer-events-none" 
+                            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
                             alt={player.name}
                          />
                          
@@ -606,30 +488,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                      </div>
                   )}
 
-                  {player && selectedAttributePlayerId === player.id && (
-                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-56 bg-black/90 border border-white/10 rounded-xl p-3 text-white shadow-2xl pointer-events-none">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-2">
-                        Atributos
-                      </div>
-                      <div className="space-y-2 text-[10px]">
-                        {attributes.map(group => (
-                          <div key={group.title}>
-                            <div className="text-[9px] uppercase font-bold tracking-wider text-clan-magenta mb-1">
-                              {group.title}
-                            </div>
-                            <div className="space-y-1">
-                              {group.items.map(item => (
-                                <div key={item.label} className="flex items-center justify-between gap-2 text-gray-200">
-                                  <span className="truncate">{item.label}</span>
-                                  <span className="text-white font-bold">{item.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                </div>
              );
            })}
@@ -697,7 +555,12 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                       
                       <div className="w-10 h-10 rounded-full bg-black overflow-hidden border border-white/10">
                          {/* ADDED CROSSORIGIN HERE TOO */}
-                         <img src={player.image || ASSETS.players.default} crossOrigin="anonymous" className="w-full h-full object-cover object-top"/>
+                         <img
+                           src={player.image || ASSETS.players.default}
+                           crossOrigin="anonymous"
+                           className="w-full h-full object-cover object-top"
+                           onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+                         />
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -726,7 +589,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                    <div className="h-40 flex flex-col items-center justify-center text-gray-600 text-center p-6 border-2 border-dashed border-white/5 rounded-xl m-2">
                      <Users size={32} className="mb-2 opacity-20" />
                      <p className="text-xs uppercase font-bold">Sin suplentes</p>
-                     <p className="text-[10px] mt-1">Todos están jugando</p>
+                     <p className="text-[10px] mt-1">Todos estÃ¡n jugando</p>
                    </div>
                  )}
               </div>
@@ -742,7 +605,15 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                {STAFF_MEMBERS.map(staff => (
                   <div key={staff.id} className="flex items-center gap-3">
                      <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center border border-white/10 overflow-hidden">
-                        {staff.image ? <img src={staff.image} className="w-full h-full object-cover" /> : <User size={14} className="text-gray-500"/>}
+                        {staff.image ? (
+                          <img
+                            src={staff.image}
+                            className="w-full h-full object-cover object-left"
+                            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+                          />
+                        ) : (
+                          <User size={14} className="text-gray-500"/>
+                        )}
                      </div>
                      <div>
                         <div className="text-gray-300 text-xs font-bold">{staff.name}</div>
@@ -760,3 +631,4 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 };
 
 export default TacticalBoard;
+

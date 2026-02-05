@@ -7,6 +7,7 @@ const GallerySection: React.FC = () => {
   const photos = [
     { id: '1', url: ASSETS.teamPhoto, match: 'Mundialito Final', title: 'Campeones 2024' },
     { id: '1b', url: ASSETS.teamPhotoCelebration, match: 'Mundialito Final', title: 'Festejo del Campeonato' },
+    { id: '1c', url: ASSETS.gallery.campeonMundialito, match: 'Mundialito Final', title: 'Campeon Mundialito' },
     { id: '2', url: ASSETS.players.nicolas, match: 'vs Los Galacticos', title: 'Nico Goal Celebration' },
     { id: '3', url: ASSETS.players.julian, match: 'vs Los Galacticos', title: 'Julian Aerial' },
     { id: '4', url: ASSETS.players.guilleF, match: 'vs Deportivo Birra', title: 'Guille Defense' },

@@ -19,6 +19,11 @@ export const ASSETS = {
   
   // Foto Secundaria (Galería)
   teamPhotoCelebration: "https://mundialitouy.com/wp-content/uploads/8-37-5.jpg",
+
+  // Galería
+  gallery: {
+    campeonMundialito: "https://i.postimg.cc/3rvgJ4d3/IMG-8106-(1).jpg",
+  },
   
   // Fotos de jugadores
   players: {
