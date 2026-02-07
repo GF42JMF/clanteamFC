@@ -152,13 +152,13 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
 
   return (
     <div className="bg-[#050505] py-24 px-4 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-6xl mx-auto relative z-10">
          <div className="flex flex-col gap-6 mb-12 border-b border-white/10 pb-6">
              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-               <h2 className="font-display text-6xl md:text-7xl text-white uppercase leading-none">
+               <h2 className="font-display text-5xl md:text-6xl text-white uppercase leading-none">
                  Resultados <span className="text-clan-magenta">Recientes</span>
                </h2>
-               <button className="hidden md:flex items-center gap-2 text-clan-magenta font-bold uppercase tracking-[0.2em] text-lg hover:text-white transition-colors">
+               <button className="hidden md:flex items-center gap-2 text-clan-magenta font-bold uppercase tracking-[0.18em] text-base hover:text-white transition-colors">
                   Ver Calendario Completo <ArrowRight size={16}/>
                </button>
              </div>
@@ -307,9 +307,9 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                <div key={match.id} className="group bg-[#0a0a0a] hover:bg-[#111] border-l-[6px] border-clan-magenta p-0 flex flex-col shadow-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(194,24,91,0.1)]">
                  <div className="flex flex-col md:flex-row md:items-stretch">
                    {/* Date - Desktop */}
-                   <div className="hidden md:flex p-6 w-52 bg-[#141519] flex-col justify-center items-center text-center border-r border-white/5 group-hover:bg-[#1a1b21] transition-colors">
-                      <span className="text-5xl font-display text-white font-bold leading-none">{match.date.split('-')[2]}</span>
-                      <span className="text-clan-magenta font-bold uppercase text-lg tracking-[0.15em] leading-none mt-2">{match.date.split('-')[1]} / {match.date.split('-')[0]}</span>
+                   <div className="hidden md:flex p-5 w-44 bg-[#141519] flex-col justify-center items-center text-center border-r border-white/5 group-hover:bg-[#1a1b21] transition-colors">
+                      <span className="text-4xl font-display text-white font-bold leading-none">{match.date.split('-')[2]}</span>
+                      <span className="text-clan-magenta font-bold uppercase text-sm tracking-[0.15em] leading-none mt-2">{match.date.split('-')[1]} / {match.date.split('-')[0]}</span>
                       <span className="text-gray-500 text-xs mt-3 uppercase flex items-center gap-1 justify-center">
                         <MapPin size={10}/> {match.location}
                       </span>
@@ -322,7 +322,7 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                    </div>
 
                    {/* Match Details */}
-                   <div className="flex-1 p-4 md:px-10 md:py-6 bg-[#090b0f] flex flex-col gap-4 justify-center">
+                   <div className="flex-1 p-4 md:px-7 md:py-5 bg-[#090b0f] flex flex-col gap-3 justify-center">
                      {/* Mobile */}
                      <div className="md:hidden flex flex-row items-center justify-between gap-4">
                        <div className="flex-1">
@@ -342,23 +342,23 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                      </div>
 
                      {/* Desktop format */}
-                     <div className="hidden md:flex items-center justify-center gap-10 xl:gap-14 min-h-[96px]">
+                     <div className="hidden md:flex items-center justify-center gap-8 xl:gap-10 min-h-[84px]">
                        <div className="text-right">
-                         <div className="font-display text-5xl lg:text-6xl text-white uppercase leading-none">Clan Team</div>
-                         <div className="text-gray-500 text-xl uppercase tracking-[0.18em] leading-none mt-2">Local</div>
+                         <div className="font-display text-4xl lg:text-5xl text-white uppercase leading-none">Clan Team</div>
+                         <div className="text-gray-500 text-base uppercase tracking-[0.16em] leading-none mt-2">Local</div>
                        </div>
                        <div className="flex items-center gap-3 lg:gap-5">
-                         <div className="w-16 h-20 lg:w-[76px] lg:h-[84px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-5xl lg:text-6xl text-white shadow-inner">
+                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-4xl lg:text-5xl text-white shadow-inner">
                            {homeScore}
                          </div>
-                         <span className="text-gray-600 font-display text-4xl">-</span>
-                         <div className="w-16 h-20 lg:w-[76px] lg:h-[84px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-5xl lg:text-6xl text-gray-300 shadow-inner">
+                         <span className="text-gray-600 font-display text-3xl">-</span>
+                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-4xl lg:text-5xl text-gray-300 shadow-inner">
                            {awayScore}
                          </div>
                        </div>
                        <div className="text-left">
-                         <div className="font-display text-5xl lg:text-6xl text-[#a7afbf] uppercase leading-none">{match.opponent}</div>
-                         <div className="text-gray-500 text-xl uppercase tracking-[0.18em] leading-none mt-2">Visitante</div>
+                         <div className="font-display text-4xl lg:text-5xl text-[#a7afbf] uppercase leading-none">{match.opponent}</div>
+                         <div className="text-gray-500 text-base uppercase tracking-[0.16em] leading-none mt-2">Visitante</div>
                        </div>
                      </div>
 
@@ -395,7 +395,7 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                    </div>
 
                    {/* Outcome + MVP - Right side on desktop */}
-                   <div className="md:w-44 border-t md:border-t-0 md:border-l border-white/5 bg-[#050505] p-4 md:p-5 flex md:flex-col items-start md:items-center justify-center gap-1">
+                   <div className="md:w-36 border-t md:border-t-0 md:border-l border-white/5 bg-[#050505] p-3 md:p-4 flex md:flex-col items-start md:items-center justify-center gap-1">
                      <div className="w-full md:flex md:flex-col md:items-center">
                        {outcome === 'Victoria' && (
                          <span className="inline-flex md:w-full md:justify-center px-3 py-1 bg-green-500/10 text-green-500 text-[11px] font-bold uppercase rounded border border-green-500/20">Victoria</span>
