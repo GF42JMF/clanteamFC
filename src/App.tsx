@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿﻿﻿﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Hero from './components/Hero';
 import TeamManager from './components/TeamManager';
 import MatchesSection from './components/MatchesSection';
@@ -290,9 +290,9 @@ const App: React.FC = () => {
 
       {/* Navigation */}
       <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#050505]/95 backdrop-blur-md py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-transparent py-6'}`}
+        className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-black/60 backdrop-blur-xl py-3 border-b border-white/5 shadow-[0_0_40px_rgba(0,0,0,0.5)]' : 'bg-transparent py-6'}`}
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-3">
           <div className="flex justify-between items-center">
 
             {/* Logo */}
@@ -305,7 +305,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Desktop Menu with Animated Sliding Pill */}
-            <div className="hidden md:flex items-center gap-1.5 bg-black/40 p-1 rounded-full border border-white/5 backdrop-blur-sm shadow-xl overflow-x-auto max-w-full">
+            <div className="hidden md:flex items-center bg-black/50 p-1.5 rounded-full border border-white/10 backdrop-blur-md shadow-2xl overflow-x-auto max-w-full">
               {navItems.map((item) => {
                 const isActive = activeNavId === item.id;
                 return (
@@ -628,5 +628,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-

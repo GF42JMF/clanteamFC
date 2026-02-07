@@ -70,6 +70,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
   const [selectedBenchPlayer, setSelectedBenchPlayer] = useState<string | null>(null);
   const [selectedFieldTokenId, setSelectedFieldTokenId] = useState<string | null>(null); // New state for on-field swap
   const [isDownloading, setIsDownloading] = useState(false);
+  const [staffPreview, setStaffPreview] = useState<{ name: string; role: string; image: string } | null>(null);
   
   const fieldRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
@@ -99,6 +100,24 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
     localStorage.setItem(STORAGE_KEY_TOKENS, JSON.stringify(tokens));
     localStorage.setItem(STORAGE_KEY_FORMATION, currentFormation);
   }, [tokens, currentFormation]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setStaffPreview(null);
+    };
+
+    if (staffPreview) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [staffPreview]);
 
   const getPlayer = (id: string | null) => players.find(p => p.id === id);
 
@@ -449,7 +468,8 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                          {/* Enhanced Image for Face Focus - ADDED CROSSORIGIN */}
                          <img 
                             src={player.image || ASSETS.players.default} 
-                            crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
                             className="w-full h-full object-cover object-top transform scale-110 pointer-events-none" 
                             onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
                             alt={player.name}
@@ -557,7 +577,8 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                          {/* ADDED CROSSORIGIN HERE TOO */}
                          <img
                            src={player.image || ASSETS.players.default}
-                           crossOrigin="anonymous"
+                           referrerPolicy="no-referrer"
+                           loading="lazy"
                            className="w-full h-full object-cover object-top"
                            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
                          />
@@ -604,17 +625,25 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
                
                {STAFF_MEMBERS.map(staff => (
                   <div key={staff.id} className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center border border-white/10 overflow-hidden">
+                     <button
+                       type="button"
+                       onClick={() => staff.image && setStaffPreview({ name: staff.name, role: staff.role, image: staff.image })}
+                       className={`w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center border border-white/10 overflow-hidden transition-transform ${staff.image ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`}
+                       aria-label={`Ver foto de ${staff.name}`}
+                       disabled={!staff.image}
+                     >
                         {staff.image ? (
                           <img
                             src={staff.image}
                             className="w-full h-full object-cover object-left"
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
                             onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
                           />
                         ) : (
                           <User size={14} className="text-gray-500"/>
                         )}
-                     </div>
+                     </button>
                      <div>
                         <div className="text-gray-300 text-xs font-bold">{staff.name}</div>
                         <div className="text-[9px] text-clan-magenta uppercase font-bold tracking-wider">{staff.role}</div>
@@ -625,7 +654,46 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 
         </div>
 
+
       </div>
+      {staffPreview && (
+        <div
+          className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setStaffPreview(null)}
+        >
+          <button
+            className="fixed top-6 right-6 z-[130] bg-black/50 hover:bg-clan-red text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10 shadow-lg group"
+            onClick={(event) => {
+              event.stopPropagation();
+              setStaffPreview(null);
+            }}
+            aria-label="Cerrar"
+          >
+            <X size={32} className="group-hover:rotate-90 transition-transform duration-300" />
+          </button>
+          <div className="relative max-w-2xl w-full max-h-[90vh] flex flex-col items-center pointer-events-none">
+            <div
+              className="relative pointer-events-auto"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <img
+                src={staffPreview.image}
+                alt={staffPreview.name}
+                className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div
+              className="mt-6 text-center pointer-events-auto bg-black/60 px-8 py-4 rounded-2xl backdrop-blur-sm border border-white/5"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3 className="text-white font-display text-3xl uppercase tracking-wide leading-none">{staffPreview.name}</h3>
+              <span className="text-clan-magenta uppercase text-xs font-bold tracking-[0.2em] mt-2 block">{staffPreview.role}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Player } from '../types';
 import { ASSETS } from '../constants';
 import { Trash2, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
@@ -17,6 +17,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [filterPos, setFilterPos] = useState<FilterPos>('ALL');
   const [sortType, setSortType] = useState<SortType>('NUMBER');
+  const [cardImageSrc, setCardImageSrc] = useState<string>(ASSETS.players.default);
   
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,10 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
       }, 100);
     }
   };
+
+  useEffect(() => {
+    setCardImageSrc(selectedPlayer?.image || ASSETS.players.default);
+  }, [selectedPlayer]);
 
   const getPosColor = (pos: string) => {
       switch(pos) {
@@ -81,6 +86,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
           <img
             src={player.image || ASSETS.players.default}
             className="w-full h-full object-contain"
+            loading="lazy"
+            referrerPolicy="no-referrer"
             onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
           />
         </div>
@@ -229,17 +236,24 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
                     <div className="absolute top-16 right-0 left-0 bottom-32 z-10 flex items-center justify-center overflow-hidden">
                        
                        {/* Background Blur Layer to fill space if image is horizontal */}
-                       <div 
-                        className="absolute inset-0 bg-cover bg-center blur-xl opacity-60 scale-125"
-                        style={{ backgroundImage: `url(${selectedPlayer.image || ASSETS.players.default})` }}
-                       ></div>
+                       <img
+                        src={cardImageSrc}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-60 scale-125"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={() => setCardImageSrc(ASSETS.players.default)}
+                        aria-hidden="true"
+                       />
 
                        {/* Foreground Main Image (Contain + Bottom) */}
                        <img 
-                          src={selectedPlayer.image || ASSETS.players.default}
-                          onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+                          src={cardImageSrc}
+                          onError={() => setCardImageSrc(ASSETS.players.default)}
                           alt={selectedPlayer.name}
                           className="relative w-full h-full object-contain object-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
                        />
                     </div>
 

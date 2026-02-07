@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Player } from '../types';
-import { MONTHS } from '../constants';
+import { ASSETS, MONTHS } from '../constants';
 import { Check, Search, ChevronLeft, ChevronRight, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 
 interface DuesSectionProps {
@@ -170,7 +170,14 @@ const DuesSection: React.FC<DuesSectionProps> = ({ players }) => {
                          <div className="flex items-center gap-4">
                            <div className="w-10 h-10 rounded-full bg-neutral-800 border border-white/10 overflow-hidden shrink-0">
                               {player.image ? (
-                                <img src={player.image} alt="" className="w-full h-full object-cover" />
+                                <img
+                                  src={player.image}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+                                />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center font-display text-gray-500">{player.jerseyNumber}</div>
                               )}

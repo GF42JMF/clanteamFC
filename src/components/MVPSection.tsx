@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { MATCHES_STORAGE_KEY, MATCH_HISTORY } from '../constants';
+import { ASSETS, MATCHES_STORAGE_KEY, MATCH_HISTORY } from '../constants';
 import { Match, Player, UserAccount, UserRole } from '../types';
 import { Trophy, Timer } from 'lucide-react';
 
@@ -84,6 +84,9 @@ const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players }) =
           <Trophy className="text-clan-gold" size={36} />
           <h2 className="font-display text-5xl text-white uppercase">MVP del Partido</h2>
         </div>
+        <p className="text-gray-400 text-sm mb-6">
+          Selecciona y vota al mejor jugador del partido para que gane un trofeo
+        </p>
 
         {!lastMatch && (
           <div className="text-gray-500">Todavia no hay partidos cargados.</div>
@@ -142,7 +145,14 @@ const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players }) =
                     }`}
                   >
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
-                      <img src={player.image || ''} alt={player.name} className="w-full h-full object-cover" />
+                      <img
+                        src={player.image || ASSETS.players.default}
+                        alt={player.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
+                      />
                     </div>
                     <div>
                       <div className="text-white text-sm font-bold">{player.name}</div>

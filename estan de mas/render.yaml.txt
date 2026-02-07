@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: clanteamfc
-    env: static
-    buildCommand: npm run build
-    staticPublishPath: dist

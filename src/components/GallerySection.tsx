@@ -68,6 +68,8 @@ const GallerySection: React.FC = () => {
                   src={photo.url} 
                   alt={photo.title} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" 
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
                 />
                 
                 {/* Overlay on hover */}
@@ -112,6 +114,7 @@ const GallerySection: React.FC = () => {
                   src={selectedPhoto.url} 
                   alt={selectedPhoto.title} 
                   className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10" 
+                  referrerPolicy="no-referrer"
                 />
               </div>
 
