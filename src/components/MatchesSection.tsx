@@ -155,10 +155,10 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
       <div className="max-w-6xl mx-auto relative z-10">
          <div className="flex flex-col gap-6 mb-12 border-b border-white/10 pb-6">
              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-               <h2 className="font-display text-5xl md:text-6xl text-white uppercase leading-none">
+               <h2 className="font-display text-4xl md:text-5xl text-white uppercase leading-none">
                  Resultados <span className="text-clan-magenta">Recientes</span>
                </h2>
-               <button className="hidden md:flex items-center gap-2 text-clan-magenta font-bold uppercase tracking-[0.18em] text-base hover:text-white transition-colors">
+               <button className="hidden md:flex items-center gap-2 text-clan-magenta font-bold uppercase tracking-[0.16em] text-sm hover:text-white transition-colors">
                   Ver Calendario Completo <ArrowRight size={16}/>
                </button>
              </div>
@@ -308,8 +308,8 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                  <div className="flex flex-col md:flex-row md:items-stretch">
                    {/* Date - Desktop */}
                    <div className="hidden md:flex p-5 w-44 bg-[#141519] flex-col justify-center items-center text-center border-r border-white/5 group-hover:bg-[#1a1b21] transition-colors">
-                      <span className="text-4xl font-display text-white font-bold leading-none">{match.date.split('-')[2]}</span>
-                      <span className="text-clan-magenta font-bold uppercase text-sm tracking-[0.15em] leading-none mt-2">{match.date.split('-')[1]} / {match.date.split('-')[0]}</span>
+                      <span className="text-3xl font-display text-white font-bold leading-none">{match.date.split('-')[2]}</span>
+                      <span className="text-clan-magenta font-bold uppercase text-xs tracking-[0.15em] leading-none mt-2">{match.date.split('-')[1]} / {match.date.split('-')[0]}</span>
                       <span className="text-gray-500 text-xs mt-3 uppercase flex items-center gap-1 justify-center">
                         <MapPin size={10}/> {match.location}
                       </span>
@@ -344,21 +344,21 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
                      {/* Desktop format */}
                      <div className="hidden md:flex items-center justify-center gap-8 xl:gap-10 min-h-[84px]">
                        <div className="text-right">
-                         <div className="font-display text-4xl lg:text-5xl text-white uppercase leading-none">Clan Team</div>
-                         <div className="text-gray-500 text-base uppercase tracking-[0.16em] leading-none mt-2">Local</div>
+                         <div className="font-display text-3xl lg:text-4xl text-white uppercase leading-none">Clan Team</div>
+                         <div className="text-gray-500 text-sm uppercase tracking-[0.14em] leading-none mt-2">Local</div>
                        </div>
                        <div className="flex items-center gap-3 lg:gap-5">
-                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-4xl lg:text-5xl text-white shadow-inner">
+                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-3xl lg:text-4xl text-white shadow-inner">
                            {homeScore}
                          </div>
-                         <span className="text-gray-600 font-display text-3xl">-</span>
-                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-4xl lg:text-5xl text-gray-300 shadow-inner">
+                         <span className="text-gray-600 font-display text-2xl">-</span>
+                         <div className="w-14 h-16 lg:w-[62px] lg:h-[70px] bg-black border border-white/10 rounded flex items-center justify-center font-display text-3xl lg:text-4xl text-gray-300 shadow-inner">
                            {awayScore}
                          </div>
                        </div>
                        <div className="text-left">
-                         <div className="font-display text-4xl lg:text-5xl text-[#a7afbf] uppercase leading-none">{match.opponent}</div>
-                         <div className="text-gray-500 text-base uppercase tracking-[0.16em] leading-none mt-2">Visitante</div>
+                         <div className="font-display text-3xl lg:text-4xl text-[#a7afbf] uppercase leading-none">{match.opponent}</div>
+                         <div className="text-gray-500 text-sm uppercase tracking-[0.14em] leading-none mt-2">Visitante</div>
                        </div>
                      </div>
 
