@@ -1,5 +1,5 @@
-﻿import React, { useMemo, useState } from 'react';
-import { ASSETS, MATCHES_STORAGE_KEY, MATCH_HISTORY } from '../constants';
+import React, { useMemo } from 'react';
+import { ASSETS } from '../constants';
 import { Match, Player, UserAccount, UserRole } from '../types';
 import { Trophy, Timer } from 'lucide-react';
 
@@ -7,21 +7,11 @@ interface MVPSectionProps {
   role: UserRole;
   currentUser: UserAccount | null;
   players: Player[];
+  matches: Match[];
+  onVote: (params: { matchId: string; voterUserId: string; votedPlayerId: string }) => Promise<boolean>;
 }
 
-const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players }) => {
-  const [matches, setMatches] = useState<Match[]>(() => {
-    const saved = localStorage.getItem(MATCHES_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved) as Match[];
-      } catch (err) {
-        console.error('No se pudo leer los partidos.', err);
-      }
-    }
-    return MATCH_HISTORY;
-  });
-
+const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players, matches, onVote }) => {
   const lastMatch = useMemo(() => {
     if (matches.length === 0) return null;
     return [...matches].sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -47,26 +37,9 @@ const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players }) =
     isOpen &&
     !hasVoted;
 
-  const handleVote = (playerId: string) => {
+  const handleVote = async (playerId: string) => {
     if (!lastMatch || !currentUserId) return;
-
-    const updatedMatches = matches.map((match) => {
-      if (match.id !== lastMatch.id) return match;
-
-      const votes = { ...(match.votes || {}) };
-      votes[playerId] = (votes[playerId] || 0) + 1;
-
-      const votedBy = [...(match.votedBy || []), currentUserId];
-
-      return {
-        ...match,
-        votes,
-        votedBy
-      };
-    });
-
-    setMatches(updatedMatches);
-    localStorage.setItem(MATCHES_STORAGE_KEY, JSON.stringify(updatedMatches));
+    await onVote({ matchId: lastMatch.id, voterUserId: currentUserId, votedPlayerId: playerId });
   };
 
   const results = useMemo(() => {

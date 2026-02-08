@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Player } from '../types';
 import { ASSETS } from '../constants';
 import { Trash2, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
@@ -8,12 +8,13 @@ interface TeamManagerProps {
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   canViewTactics: boolean;
+  onDeletePlayer?: (id: string) => Promise<void> | void;
 }
 
 type FilterPos = 'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD';
 type SortType = 'NUMBER' | 'MVP';
 
-const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewTactics }) => {
+const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewTactics, onDeletePlayer }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [filterPos, setFilterPos] = useState<FilterPos>('ALL');
   const [sortType, setSortType] = useState<SortType>('NUMBER');
@@ -21,10 +22,17 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
   
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('¿Estás seguro de eliminar a este jugador del Clan?')) {
       setPlayers(prev => prev.filter(p => p.id !== id));
       if (selectedPlayer?.id === id) setSelectedPlayer(null);
+      if (onDeletePlayer) {
+        try {
+          await onDeletePlayer(id);
+        } catch (error) {
+          console.error('No se pudo sincronizar la eliminación del jugador.', error);
+        }
+      }
     }
   };
 

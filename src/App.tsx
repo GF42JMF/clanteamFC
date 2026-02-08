@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Hero from './components/Hero';
 import TeamManager from './components/TeamManager';
 import MatchesSection from './components/MatchesSection';
@@ -7,9 +7,19 @@ import DuesSection from './components/DuesSection';
 import MVPSection from './components/MVPSection';
 import AdminAccessPanel from './components/AdminAccessPanel';
 import { INITIAL_PLAYERS, ASSETS } from './constants';
-import { Player, UserAccount, UserRole } from './types';
+import { Match, Player, UserAccount, UserRole } from './types';
 import { LayoutDashboard, Users, Trophy, Image as ImageIcon, Wallet, Menu, X, Instagram, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  castMvpVote,
+  deleteMatch,
+  deletePlayer,
+  fetchMatches,
+  fetchPlayers,
+  getLocalMatches,
+  setLocalMatches,
+  upsertMatch,
+} from './services/clubData';
 
 type AuthMode = 'login' | 'register';
 
@@ -62,6 +72,7 @@ const App: React.FC = () => {
   const [activeNavId, setActiveNavId] = useState('home');
 
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
+  const [matches, setMatches] = useState<Match[]>(() => getLocalMatches());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -85,6 +96,86 @@ const App: React.FC = () => {
       setCurrentUserId(null);
     }
   }, [currentUserId, currentUser]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      const [remotePlayers, remoteMatches] = await Promise.all([fetchPlayers(), fetchMatches()]);
+      if (!isMounted) return;
+
+      setPlayers(remotePlayers);
+      setMatches(remoteMatches);
+    };
+
+    loadInitialData().catch((error) => {
+      console.error('No se pudo cargar la información remota.', error);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setLocalMatches(matches);
+  }, [matches]);
+
+  const handleSaveMatch = useCallback(async (nextMatch: Match) => {
+    setMatches((prev) => {
+      const index = prev.findIndex((entry) => entry.id === nextMatch.id);
+      if (index === -1) return [nextMatch, ...prev].sort((a, b) => b.date.localeCompare(a.date));
+
+      const updated = [...prev];
+      updated[index] = nextMatch;
+      return updated.sort((a, b) => b.date.localeCompare(a.date));
+    });
+
+    const synced = await upsertMatch(nextMatch);
+    if (!synced) {
+      console.warn('Partido guardado localmente. Sincronización remota pendiente.');
+    }
+  }, []);
+
+  const handleDeleteMatch = useCallback(async (matchId: string) => {
+    setMatches((prev) => prev.filter((entry) => entry.id !== matchId));
+    const synced = await deleteMatch(matchId);
+    if (!synced) {
+      console.warn('Partido eliminado localmente. Sincronización remota pendiente.');
+    }
+  }, []);
+
+  const handleVote = useCallback(async (params: { matchId: string; voterUserId: string; votedPlayerId: string }) => {
+    const voteResult = await castMvpVote(params);
+    if (voteResult === 'duplicate') return false;
+
+    setMatches((prev) =>
+      prev.map((match) => {
+        if (match.id !== params.matchId) return match;
+
+        const previousVotes = { ...(match.votes || {}) };
+        previousVotes[params.votedPlayerId] = (previousVotes[params.votedPlayerId] || 0) + 1;
+
+        const previousVoters = new Set(match.votedBy || []);
+        previousVoters.add(params.voterUserId);
+
+        return {
+          ...match,
+          votes: previousVotes,
+          votedBy: [...previousVoters],
+        };
+      })
+    );
+
+    return true;
+  }, []);
+
+  const handleDeletePlayer = useCallback(async (playerId: string) => {
+    const synced = await deletePlayer(playerId);
+    if (!synced) {
+      console.warn('Jugador eliminado localmente. Sincronización remota pendiente.');
+    }
+  }, []);
 
   useEffect(() => {
     if (role !== 'admin' && viewMode === 'dues') {
@@ -457,10 +548,31 @@ const App: React.FC = () => {
             </section>
 
             {/* Reordered to match Nav: Home -> Team -> Matches -> MVP -> Gallery */}
-            <div id="team-section"><TeamManager players={players} setPlayers={setPlayers} canViewTactics={role !== 'public'} /></div>
-            <div id="matches-section"><MatchesSection role={role} players={players} /></div>
+            <div id="team-section">
+              <TeamManager
+                players={players}
+                setPlayers={setPlayers}
+                canViewTactics={role !== 'public'}
+                onDeletePlayer={handleDeletePlayer}
+              />
+            </div>
+            <div id="matches-section">
+              <MatchesSection
+                role={role}
+                players={players}
+                matches={matches}
+                onSaveMatch={handleSaveMatch}
+                onDeleteMatch={handleDeleteMatch}
+              />
+            </div>
             {role !== 'public' && (
-              <MVPSection role={role} currentUser={currentUser} players={players} />
+              <MVPSection
+                role={role}
+                currentUser={currentUser}
+                players={players}
+                matches={matches}
+                onVote={handleVote}
+              />
             )}
             <div id="gallery-section"><GallerySection /></div>
             {role === 'admin' && (

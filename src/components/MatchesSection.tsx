@@ -1,26 +1,16 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { MATCH_HISTORY, MATCHES_STORAGE_KEY } from '../constants';
+import React, { useMemo, useState } from 'react';
 import { Match, Player, UserRole } from '../types';
 import { MapPin, Trophy, ArrowRight, Plus, Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
 
 interface MatchesSectionProps {
   role: UserRole;
   players: Player[];
+  matches: Match[];
+  onSaveMatch: (match: Match) => Promise<void>;
+  onDeleteMatch: (matchId: string) => Promise<void>;
 }
 
-const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
-  const [matches, setMatches] = useState<Match[]>(() => {
-    const saved = localStorage.getItem(MATCHES_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved) as Match[];
-      } catch (err) {
-        console.error('No se pudo leer el historial de partidos.', err);
-      }
-    }
-    return MATCH_HISTORY;
-  });
-
+const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players, matches, onSaveMatch, onDeleteMatch }) => {
   const [formError, setFormError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,10 +24,6 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
   const [voteHours, setVoteHours] = useState('2');
   const [voteMinutes, setVoteMinutes] = useState('30');
   const [openMatchId, setOpenMatchId] = useState<string | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem(MATCHES_STORAGE_KEY, JSON.stringify(matches));
-  }, [matches]);
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => b.date.localeCompare(a.date));
@@ -67,7 +53,7 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
     setEditingId(null);
   };
 
-  const handleAddOrEditMatch = (event: React.FormEvent) => {
+  const handleAddOrEditMatch = async (event: React.FormEvent) => {
     event.preventDefault();
     setFormError('');
 
@@ -88,43 +74,43 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
     const minutes = Math.max(0, Number.parseInt(voteMinutes || '0', 10));
     const closeAt = new Date(Date.now() + (hours * 60 + minutes) * 60 * 1000).toISOString();
 
-    if (editingId) {
-      setMatches((prev) =>
-        prev.map((match) =>
-          match.id === editingId
-            ? {
-                ...match,
-                opponent,
-                date,
-                result,
-                win: isWin,
-                location,
-                mvp: mvp || '',
-                images,
-                eligiblePlayerIds,
-                voteCloseAt: closeAt
-              }
-            : match
-        )
-      );
-    } else {
-      const newMatch: Match = {
-        id: `m-${Date.now()}`,
-        opponent,
-        date,
-        result,
-        win: isWin,
-        scorers: [],
-        location,
-        mvp: mvp || '',
-        images,
-        eligiblePlayerIds,
-        voteCloseAt: closeAt,
-        votes: {},
-        votedBy: []
-      };
+    const editingMatch = editingId ? matches.find((entry) => entry.id === editingId) : null;
 
-      setMatches((prev) => [newMatch, ...prev]);
+    const nextMatch: Match = editingMatch
+      ? {
+          ...editingMatch,
+          opponent,
+          date,
+          result,
+          win: isWin,
+          location,
+          mvp: mvp || '',
+          images,
+          eligiblePlayerIds,
+          voteCloseAt: closeAt
+        }
+      : {
+          id: `m-${Date.now()}`,
+          opponent,
+          date,
+          result,
+          win: isWin,
+          scorers: [],
+          location,
+          mvp: mvp || '',
+          images,
+          eligiblePlayerIds,
+          voteCloseAt: closeAt,
+          votes: {},
+          votedBy: []
+        };
+
+    try {
+      await onSaveMatch(nextMatch);
+    } catch (error) {
+      console.error('No se pudo guardar el partido.', error);
+      setFormError('No se pudo guardar el partido. Reintenta.');
+      return;
     }
 
     resetForm();
@@ -145,9 +131,13 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players }) => {
     setIsOpen(true);
   };
 
-  const handleDeleteMatch = (matchId: string) => {
+  const handleDeleteMatch = async (matchId: string) => {
     if (!confirm('¿Eliminar este partido?')) return;
-    setMatches((prev) => prev.filter((match) => match.id !== matchId));
+    try {
+      await onDeleteMatch(matchId);
+    } catch (error) {
+      console.error('No se pudo eliminar el partido.', error);
+    }
   };
 
   return (

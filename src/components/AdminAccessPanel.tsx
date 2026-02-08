@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Player, UserAccount, UserRole } from '../types';
 import { Shield, UserPlus } from 'lucide-react';
 

@@ -2,11 +2,20 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Clan Team F.C.
 
-This contains everything you need to run your app locally.
+Frontend React + Vite para gestionar plantilla, partidos, votos MVP, galería y cuotas.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1yzBIJv53NyE-WcgSk-3wIlOnubEH1ak0
+## Configuración Supabase (frontend)
+
+Para conectar el frontend a Supabase, define estas variables en `.env.local`:
+
+```env
+VITE_SUPABASE_URL=https://qpraaostmojllbgfczox.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_key
+```
+
+Si faltan esas variables, la app usa fallback local (`constants` + `localStorage`) sin romper la UI.
 
 ## Run Locally
 
@@ -15,6 +24,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1yzBIJv53NyE-WcgSk-3wIl
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env.local` (opcional, recomendado)
 3. Run the app:
    `npm run dev`

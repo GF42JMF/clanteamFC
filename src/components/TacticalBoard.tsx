@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Player } from '../types';
 import { ASSETS, STAFF_MEMBERS } from '../constants';
 import { Users, RefreshCw, ChevronRight, Shield, User, X, Trash2, Zap, LayoutTemplate, ArrowRightLeft, Download, Save } from 'lucide-react';
