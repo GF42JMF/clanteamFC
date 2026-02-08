@@ -6,6 +6,10 @@ const configuredAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(configuredUrl && configuredAnonKey);
 
+if (!isSupabaseConfigured) {
+  console.warn('Supabase no configurado: usando fallback local (constants/localStorage).');
+}
+
 export const supabase = isSupabaseConfigured
   ? createClient(configuredUrl, configuredAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true },

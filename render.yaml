@@ -4,3 +4,8 @@ services:
     env: static
     buildCommand: npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_SUPABASE_URL
+        value: https://qpraaostmojllbgfczox.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
