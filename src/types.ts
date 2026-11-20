@@ -21,7 +21,6 @@ export interface UserAccount {
   id: string;
   username: string;
   email: string;
-  password: string;
   role: UserRole;
   playerId?: string;
 }

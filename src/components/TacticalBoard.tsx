@@ -4,9 +4,11 @@ import { ASSETS, STAFF_MEMBERS } from '../constants';
 import { Users, RefreshCw, ChevronRight, Shield, User, X, Trash2, Zap, LayoutTemplate, ArrowRightLeft, Download, Save } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import {fetchTactics,saveTactics} from '../services/api';
 
 interface TacticalBoardProps {
   players: Player[];
+  canManage: boolean;
 }
 
 interface FieldToken {
@@ -18,6 +20,8 @@ interface FieldToken {
 
 // Coordinate Presets (Percentages)
 const FORMATIONS = {
+  '2-3-1': [{x:50,y:88},{x:30,y:70},{x:70,y:70},{x:20,y:45},{x:50,y:45},{x:80,y:45},{x:50,y:15}],
+  '3-2-1': [{x:50,y:88},{x:20,y:70},{x:50,y:70},{x:80,y:70},{x:35,y:42},{x:65,y:42},{x:50,y:15}],
   '3-3-1': [
     { x: 50, y: 88 }, // GK
     { x: 20, y: 70 }, { x: 50, y: 65 }, { x: 80, y: 70 }, // DEF
@@ -38,7 +42,7 @@ const FORMATIONS = {
   ],
   '3-2-2': [
     { x: 50, y: 88 }, // GK
-    { x: 20, y: 70 }, { x: 50, y: 70 }, // DEF
+    { x: 20, y: 70 }, { x: 50, y: 70 }, { x: 80, y: 70 }, // DEF
     { x: 35, y: 45 }, { x: 65, y: 45 }, // MID
     { x: 35, y: 15 }, { x: 65, y: 15 }, // FWD
   ]
@@ -49,7 +53,7 @@ type FormationKey = keyof typeof FORMATIONS;
 const STORAGE_KEY_TOKENS = 'clan_team_tactics_tokens';
 const STORAGE_KEY_FORMATION = 'clan_team_tactics_formation';
 
-const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
+const TacticalBoard: React.FC<TacticalBoardProps> = ({ players, canManage }) => {
   // Initialize state from LocalStorage if available
   const [tokens, setTokens] = useState<FieldToken[]>(() => {
     const savedTokens = localStorage.getItem(STORAGE_KEY_TOKENS);
@@ -64,9 +68,14 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
   });
   
   const [currentFormation, setCurrentFormation] = useState<FormationKey>(() => {
-    return (localStorage.getItem(STORAGE_KEY_FORMATION) as FormationKey) || '3-3-1';
+    const saved=localStorage.getItem(STORAGE_KEY_FORMATION);return saved&&saved in FORMATIONS?saved as FormationKey:'3-3-1';
   });
 
+  const [revision,setRevision]=useState(0);
+  const [boardStatus,setBoardStatus]=useState('Cargando alineación compartida...');
+  const [savingBoard,setSavingBoard]=useState(false);
+  useEffect(()=>{fetchTactics().then(({board,revision})=>{if(board&&board.formation in FORMATIONS){setCurrentFormation(board.formation as FormationKey);setTokens(board.tokens);}setRevision(revision);setBoardStatus(board?'Alineación compartida cargada.':'Todavía no hay una alineación compartida.');}).catch(e=>setBoardStatus(e.message));},[]);
+  const handleSaveBoard=async()=>{setSavingBoard(true);try{const data=await saveTactics(currentFormation,tokens,revision);setRevision(data.revision);setBoardStatus('Alineación guardada para el club.');}catch(e){setBoardStatus(e instanceof Error?e.message:'No se pudo guardar.');}finally{setSavingBoard(false);}};
   const [selectedBenchPlayer, setSelectedBenchPlayer] = useState<string | null>(null);
   const [selectedFieldTokenId, setSelectedFieldTokenId] = useState<string | null>(null); // New state for on-field swap
   const [isDownloading, setIsDownloading] = useState(false);
@@ -123,19 +132,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
 
   // --- ACTIONS ---
 
-  const handleFormationChange = (fmt: FormationKey) => {
-    setCurrentFormation(fmt);
-    // When changing formation, we try to keep players in their relative slots index-wise
-    setTokens(prev => {
-      const newCoords = FORMATIONS[fmt];
-      return prev.map((token, i) => ({
-        ...token,
-        x: newCoords[i]?.x || 50,
-        y: newCoords[i]?.y || 50
-      }));
-    });
-  };
-
+  const handleFormationChange=(fmt:FormationKey)=>{setCurrentFormation(fmt);setTokens(prev=>FORMATIONS[fmt].map((pos,i)=>({id:'t'+i,playerId:prev[i]?.playerId||null,...pos})));};
   const handleClearBoard = () => {
     if(confirm('Â¿Limpiar toda la pizarra?')) {
       setTokens(prev => prev.map(t => ({ ...t, playerId: null })));
@@ -342,22 +339,24 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players }) => {
           </h3>
           <p className="text-gray-500 text-sm mt-2 max-w-lg">
             Arrastra para mover. Toca dos jugadores en cancha para <span className="text-cyan-400 font-bold">intercambiar</span>.
-            <br/> <span className="text-green-400 flex items-center gap-1 text-[10px] uppercase font-bold mt-1"><Save size={10}/> Cambios guardados automáticamente</span>
+            <br/> <span className="text-green-400 flex items-center gap-1 text-[10px] uppercase font-bold mt-1"><Save size={10}/> Borrador guardado en este dispositivo</span>
           </p>
         </div>
 
+        <div role="status" className="text-sm text-gray-400 max-w-md">{boardStatus} {!canManage&&'Podés preparar un borrador y descargarlo; el administrador publica la alineación compartida.'}</div>
         {/* Quick Actions Toolbar */}
         <div className="flex flex-wrap items-center gap-3 bg-[#121212] p-2 rounded-xl border border-white/10 shadow-lg">
            
+           {canManage&&<button className="club-button" onClick={()=>void handleSaveBoard()} disabled={savingBoard}><Save size={16}/>{savingBoard?'Guardando...':'Guardar en el club'}</button>}
            {/* Formation Selectors */}
-           <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg">
+           <div className="flex flex-wrap items-center gap-1 bg-black/40 p-1 rounded-lg">
               {Object.keys(FORMATIONS).map((fmt) => (
                 <button
                   key={fmt}
                   onClick={() => handleFormationChange(fmt as FormationKey)}
                   className={`px-3 py-1.5 text-xs font-bold rounded transition-all ${currentFormation === fmt ? 'bg-white text-black' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
                 >
-                  {fmt}
+                  {fmt} ({fmt==='2-3-1'||fmt==='3-2-1'?'F7':'F8'})
                 </button>
               ))}
            </div>

@@ -1,20 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Player } from '../types';
 import { ASSETS } from '../constants';
-import { Trash2, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
-import TacticalBoard from './TacticalBoard';
+import { Trash2, Pencil, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
+
+import PlayerEditor from './PlayerEditor';
+const TacticalBoard=React.lazy(()=>import('./TacticalBoard'));
 
 interface TeamManagerProps {
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   canViewTactics: boolean;
+  canManage: boolean;
+  onSavePlayer: (player:Player)=>Promise<void>;
   onDeletePlayer?: (id: string) => Promise<void> | void;
 }
 
 type FilterPos = 'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD';
 type SortType = 'NUMBER' | 'MVP';
 
-const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewTactics, onDeletePlayer }) => {
+const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewTactics, canManage, onSavePlayer, onDeletePlayer }) => {
+  const [editingPlayer,setEditingPlayer]=useState<Player|null|undefined>(undefined);
+  const [saveError,setSaveError]=useState('');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [filterPos, setFilterPos] = useState<FilterPos>('ALL');
   const [sortType, setSortType] = useState<SortType>('NUMBER');
@@ -22,20 +28,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
   
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar a este jugador del Clan?')) {
-      setPlayers(prev => prev.filter(p => p.id !== id));
-      if (selectedPlayer?.id === id) setSelectedPlayer(null);
-      if (onDeletePlayer) {
-        try {
-          await onDeletePlayer(id);
-        } catch (error) {
-          console.error('No se pudo sincronizar la eliminación del jugador.', error);
-        }
-      }
-    }
-  };
-
+  const handleDelete=async(id:string)=>{if(!canManage||!confirm('¿Quitar a este jugador del plantel? Su historial se conserva.'))return;setSaveError('');try{if(onDeletePlayer)await onDeletePlayer(id);setPlayers(prev=>prev.filter(p=>p.id!==id));if(selectedPlayer?.id===id)setSelectedPlayer(null);}catch(e){setSaveError(e instanceof Error?e.message:'No se pudo quitar al jugador.');}};
   const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
     // Mobile UX: Scroll to card when clicked
@@ -116,9 +109,9 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
             <span className="block text-gray-700 uppercase text-[8px] tracking-widest font-bold">MVP</span>
             <span className="font-display text-lg text-clan-gold">{player.stats?.mvp || 0}</span>
           </div>
-          <button onClick={(e) => { e.stopPropagation(); handleDelete(player.id); }} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all">
+          {canManage&&<><button aria-label={'Editar jugador: '+player.name} onClick={e=>{e.stopPropagation();setEditingPlayer(player);}} className="p-2 text-gray-500 hover:text-white"><Pencil size={16}/></button><button aria-label={'Quitar jugador: '+player.name} onClick={(e) => { e.stopPropagation(); void handleDelete(player.id); }} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all">
             <Trash2 size={16} />
-          </button>
+          </button></>}
         </div>
     </div>
   );
@@ -130,7 +123,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-           <span className="text-clan-magenta uppercase tracking-[0.5em] font-bold text-xs">Temporada 2025</span>
+           <span className="text-clan-magenta uppercase tracking-[0.5em] font-bold text-xs">Plantel del club</span>
            <h2 className="font-display text-7xl text-white uppercase mt-2">
              Plantilla <span className="text-transparent bg-clip-text bg-gradient-to-r from-clan-magenta to-clan-red">Del Clan</span>
            </h2>
@@ -148,9 +141,9 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
                       <h3 className="font-display text-3xl text-white uppercase leading-none">Jugadores</h3>
                       <p className="text-gray-500 text-xs mt-1">Gestiona la alineación oficial</p>
                     </div>
-                    <button className="bg-clan-magenta hover:bg-pink-700 text-white px-5 py-2 rounded-lg text-xs uppercase font-bold tracking-wider transition-colors shadow-lg shadow-pink-900/20 flex items-center gap-2">
+                    {canManage&&<button onClick={()=>setEditingPlayer(null)} className="bg-clan-magenta hover:bg-pink-700 text-white px-5 py-2 rounded-lg text-xs uppercase font-bold tracking-wider transition-colors shadow-lg shadow-pink-900/20 flex items-center gap-2">
                        + Nuevo
-                    </button>
+                    </button>}
                   </div>
 
                   {/* Filters & Sort */}
@@ -325,8 +318,10 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
             </div>
         </div>
 
+        {saveError&&<p className="club-error" role="alert">{saveError}</p>}
+        {editingPlayer!==undefined&&<PlayerEditor player={editingPlayer} onSave={async p=>{await onSavePlayer(p);setSelectedPlayer(p);}} onClose={()=>setEditingPlayer(undefined)}/>}
         {/* TACTICAL BOARD SECTION */}
-        {canViewTactics && <TacticalBoard players={players} />}
+        {canViewTactics && <React.Suspense fallback={<p className="text-gray-400 py-10">Cargando pizarra táctica...</p>}><TacticalBoard players={players} canManage={canManage} /></React.Suspense>}
 
       </div>
     </div>

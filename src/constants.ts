@@ -6,31 +6,31 @@ import { Player, Match } from './types';
 
 export const ASSETS = {
   // Logo Oficial
-  logo: "https://i.postimg.cc/fbTd7RvX/Chat-GPT-Image-Dec-23-2025-12-20-57-PM.png", 
+  logo: "/images/escudo.png",
 
   // Logos del club (historia)
   clubLogos: {
     old: "https://i.postimg.cc/bNdvhgcT/PHOTO-2023-09-30-12-09-51.jpg",
     renewed: "/images/logo-renovado.png"
   },
-  
+
   // Foto Principal (Hero)
-  teamPhoto: "https://mundialitouy.com/wp-content/uploads/8-38-4.jpg", 
-  
+  teamPhoto: "/images/campeones.jpg",
+
   // Foto Secundaria (GalerÃ­a)
   teamPhotoCelebration: "https://mundialitouy.com/wp-content/uploads/8-37-5.jpg",
 
   // GalerÃ­a
   gallery: {
-    campeonMundialito: "https://i.postimg.cc/3rvgJ4d3/IMG-8106-(1).jpg",
+    campeonMundialito: "/images/campeones.jpg",
   },
-  
+
   // Fotos de jugadores
   players: {
-    nicolas: "https://mundialitouy.com/wp-content/uploads/1-23-141.jpg", 
-    julian: "https://mundialitouy.com/wp-content/uploads/7-19-80.jpg", 
-    guilleF: "https://mundialitouy.com/wp-content/uploads/8-24-5.jpg", 
-    agustin: "https://mundialitouy.com/wp-content/uploads/8-10-5.jpg", 
+    nicolas: "https://mundialitouy.com/wp-content/uploads/1-23-141.jpg",
+    julian: "https://mundialitouy.com/wp-content/uploads/7-19-80.jpg",
+    guilleF: "https://mundialitouy.com/wp-content/uploads/8-24-5.jpg",
+    agustin: "https://mundialitouy.com/wp-content/uploads/8-10-5.jpg",
     gonchi: "https://i.imgur.com/XqQ3X9B.png",
     // New Additions
     matiasPerez: "https://mundialitouy.com/wp-content/uploads/8-28-5.jpg",
@@ -46,7 +46,7 @@ export const ASSETS = {
     santiagoDeGouveia: "https://mundialitouy.com/wp-content/uploads/1-14-99.jpg",
     gonzaloJacques: "https://mundialitouy.com/wp-content/uploads/1-36-86.jpg",
     enzoRubin: "https://mundialitouy.com/wp-content/uploads/4-25-22.jpg",
-    default: "https://ui-avatars.com/api/?background=C2185B&color=fff&size=512&font-size=0.4"
+    default: "/images/jugador.svg"
   }
 };
 

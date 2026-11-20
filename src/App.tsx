@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Hero from './components/Hero';
 import TeamManager from './components/TeamManager';
 import MatchesSection from './components/MatchesSection';
-import GallerySection from './components/GallerySection';
-import DuesSection from './components/DuesSection';
+import GallerySection from './components/ClubGallery';
+import DuesSection from './components/ClubDues';
 import MVPSection from './components/MVPSection';
-import AdminAccessPanel from './components/AdminAccessPanel';
-import { INITIAL_PLAYERS, ASSETS } from './constants';
+import AdminAccessPanel from './components/ClubAccess';
+import ClubSummary from './components/ClubSummary';
+import { api, auth, invalidateClub, upsertPlayer } from './services/api';
+import { ASSETS } from './constants';
 import { Match, Player, UserAccount, UserRole } from './types';
 import { LayoutDashboard, Users, Trophy, Image as ImageIcon, Wallet, Menu, X, Instagram, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,9 +19,8 @@ import {
   fetchMatches,
   fetchPlayers,
   getLocalMatches,
-  setLocalMatches,
   upsertMatch,
-} from './services/clubData';
+} from './services/api';
 
 type AuthMode = 'login' | 'register';
 
@@ -29,37 +30,13 @@ const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
 };
 
-const USERS_STORAGE_KEY = 'clan_team_users';
-const CURRENT_USER_KEY = 'clan_team_current_user';
-
-const DEFAULT_USERS: UserAccount[] = [
-  { id: 'u-admin', username: 'admin', email: 'gfontes32@gmail.com', password: 'clanadmin2025', role: 'admin' },
-  { id: 'u-player', username: 'jugador', email: 'jugador@clan.team', password: 'clanjugador2025', role: 'player' },
-];
-
 const App: React.FC = () => {
-  // 'landing' means the scrollable page (Home, Team, Matches, Gallery)
-  // 'dues' is the separate Dues page
   const [viewMode, setViewMode] = useState<'landing' | 'dues'>('landing');
-
-  const [users, setUsers] = useState<UserAccount[]>(() => {
-    const saved = localStorage.getItem(USERS_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved) as UserAccount[];
-      } catch (err) {
-        console.error('No se pudo leer los usuarios.', err);
-      }
-    }
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
-    return DEFAULT_USERS;
-  });
-  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
-    return localStorage.getItem(CURRENT_USER_KEY);
-  });
-  const currentUser = useMemo(() => users.find((user) => user.id === currentUserId) || null, [users, currentUserId]);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const role: UserRole = currentUser?.role ?? 'public';
-
+  const [notice, setNotice] = useState('');
+  const [mode, setMode] = useState('');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [loginId, setLoginId] = useState('');
@@ -71,7 +48,7 @@ const App: React.FC = () => {
   // Controls the Highlighted Pill in Nav
   const [activeNavId, setActiveNavId] = useState('home');
 
-  const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>(() => getLocalMatches());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -79,104 +56,28 @@ const App: React.FC = () => {
   // Lock to prevent spy update during click-scroll animation
   const isManualScrolling = useRef(false);
 
-  useEffect(() => {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    if (currentUserId) {
-      localStorage.setItem(CURRENT_USER_KEY, currentUserId);
-    } else {
-      localStorage.removeItem(CURRENT_USER_KEY);
-    }
-  }, [currentUserId]);
-
-  useEffect(() => {
-    if (currentUserId && !currentUser) {
-      setCurrentUserId(null);
-    }
-  }, [currentUserId, currentUser]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadInitialData = async () => {
-      const [remotePlayers, remoteMatches] = await Promise.all([fetchPlayers(), fetchMatches()]);
-      if (!isMounted) return;
-
-      setPlayers(remotePlayers);
-      setMatches(remoteMatches);
-    };
-
-    loadInitialData().catch((error) => {
-      console.error('No se pudo cargar la información remota.', error);
-    });
-
-    return () => {
-      isMounted = false;
-    };
+  const refreshClub = useCallback(async () => {
+    invalidateClub();
+    const [nextPlayers, nextMatches] = await Promise.all([fetchPlayers(), fetchMatches()]);
+    setPlayers(nextPlayers); setMatches(nextMatches);
   }, []);
-
   useEffect(() => {
-    setLocalMatches(matches);
-  }, [matches]);
-
-  const handleSaveMatch = useCallback(async (nextMatch: Match) => {
-    setMatches((prev) => {
-      const index = prev.findIndex((entry) => entry.id === nextMatch.id);
-      if (index === -1) return [nextMatch, ...prev].sort((a, b) => b.date.localeCompare(a.date));
-
-      const updated = [...prev];
-      updated[index] = nextMatch;
-      return updated.sort((a, b) => b.date.localeCompare(a.date));
-    });
-
-    const synced = await upsertMatch(nextMatch);
-    if (!synced) {
-      console.warn('Partido guardado localmente. Sincronización remota pendiente.');
-    }
+    let mounted=true;
+    Promise.all([auth.session(),fetchPlayers(),fetchMatches()]).then(([session,ps,ms])=>{
+      if(!mounted)return;setCurrentUser(session.user);setMode(session.mode);setPlayers(ps);setMatches(ms);
+    }).catch(e=>{if(mounted)setNotice(e.message||'No se pudo cargar el club.');});
+    return()=>{mounted=false;};
   }, []);
-
-  const handleDeleteMatch = useCallback(async (matchId: string) => {
-    setMatches((prev) => prev.filter((entry) => entry.id !== matchId));
-    const synced = await deleteMatch(matchId);
-    if (!synced) {
-      console.warn('Partido eliminado localmente. Sincronización remota pendiente.');
-    }
-  }, []);
-
-  const handleVote = useCallback(async (params: { matchId: string; voterUserId: string; votedPlayerId: string }) => {
-    const voteResult = await castMvpVote(params);
-    if (voteResult === 'duplicate') return false;
-
-    setMatches((prev) =>
-      prev.map((match) => {
-        if (match.id !== params.matchId) return match;
-
-        const previousVotes = { ...(match.votes || {}) };
-        previousVotes[params.votedPlayerId] = (previousVotes[params.votedPlayerId] || 0) + 1;
-
-        const previousVoters = new Set(match.votedBy || []);
-        previousVoters.add(params.voterUserId);
-
-        return {
-          ...match,
-          votes: previousVotes,
-          votedBy: [...previousVoters],
-        };
-      })
-    );
-
-    return true;
-  }, []);
-
-  const handleDeletePlayer = useCallback(async (playerId: string) => {
-    const synced = await deletePlayer(playerId);
-    if (!synced) {
-      console.warn('Jugador eliminado localmente. Sincronización remota pendiente.');
-    }
-  }, []);
-
+  useEffect(()=>{if(role!=='admin'){setUsers([]);return;}auth.users().then(setUsers).catch(e=>setNotice(e.message));},[role]);
+  useEffect(()=>{if(!notice)return;const id=setTimeout(()=>setNotice(''),7000);return()=>clearTimeout(id);},[notice]);
+  const handleSaveMatch=useCallback(async(nextMatch:Match)=>{
+    await upsertMatch(nextMatch);await refreshClub();setNotice('Partido guardado en el club.');
+  },[refreshClub]);
+  const handleDeleteMatch=useCallback(async(id:string)=>{await deleteMatch(id);await refreshClub();setNotice('Partido quitado del listado. El registro original se conserva.');},[refreshClub]);
+  const handleSavePlayer=useCallback(async(player:Player)=>{await upsertPlayer(player);await refreshClub();setNotice('Jugador guardado.');},[refreshClub]);
+  const handleDeletePlayer=useCallback(async(id:string)=>{await deletePlayer(id);await refreshClub();setNotice('Jugador quitado del plantel. Su historial se conserva.');},[refreshClub]);
+  const handleVote=useCallback(async(params:{matchId:string;voterUserId:string;votedPlayerId:string})=>{try{await castMvpVote(params);await refreshClub();setNotice('Voto registrado.');return true;}catch(e){setNotice(e instanceof Error?e.message:'No se pudo votar.');return false;}},[refreshClub]);
+  const handleSaveUser=async(user:UserAccount)=>{try{await api('/api/users/'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify(user)});setUsers(await auth.users());setNotice('Acceso actualizado.');}catch(e){setNotice(e instanceof Error?e.message:'No se pudo guardar el acceso.');}};
   useEffect(() => {
     if (role !== 'admin' && viewMode === 'dues') {
       setViewMode('landing');
@@ -313,69 +214,17 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = (event: React.FormEvent) => {
-    event.preventDefault();
-    const match = users.find(
-      (entry) =>
-        (entry.username.trim().toLowerCase() === loginId.trim().toLowerCase() ||
-          entry.email.trim().toLowerCase() === loginId.trim().toLowerCase()) &&
-        entry.password === password
-    );
-    if (!match) {
-      setAuthError('Usuario o contraseña incorrectos.');
-      return;
-    }
-    setCurrentUserId(match.id);
-    setIsAuthOpen(false);
-    setLoginId('');
-    setPassword('');
-    setAuthError('');
+  const handleLogin = async (event:React.FormEvent) => {
+    event.preventDefault();setAuthError('');
+    try{const user=await auth.login(loginId,password);setCurrentUser(user);setIsAuthOpen(false);setLoginId('');setPassword('');await refreshClub();}
+    catch(e){setAuthError(e instanceof Error?e.message:'No se pudo iniciar sesión.');}
   };
-
-  const handleRegister = (event: React.FormEvent) => {
-    event.preventDefault();
-    setAuthError('');
-
-    if (!username || !email || !password) {
-      setAuthError('Completa usuario, email y contraseña.');
-      return;
-    }
-
-    const exists = users.some(
-      (user) =>
-        user.username.trim().toLowerCase() === username.trim().toLowerCase() ||
-        user.email.trim().toLowerCase() === email.trim().toLowerCase()
-    );
-
-    if (exists) {
-      setAuthError('Ese usuario o email ya existe.');
-      return;
-    }
-
-    const newUser: UserAccount = {
-      id: `u-${Date.now()}`,
-      username,
-      email,
-      password,
-      role: 'player'
-    };
-
-    setUsers((prev) => [...prev, newUser]);
-    setCurrentUserId(newUser.id);
-    setIsAuthOpen(false);
-    setUsername('');
-    setEmail('');
-    setPassword('');
+  const handleRegister = async (event:React.FormEvent) => {
+    event.preventDefault();setAuthError('');
+    try{const user=await auth.register(username,email,password);setCurrentUser(user);setIsAuthOpen(false);setUsername('');setEmail('');setPassword('');await refreshClub();}
+    catch(e){setAuthError(e instanceof Error?e.message:'No se pudo crear la cuenta.');}
   };
-
-  const handleLogout = () => {
-    setCurrentUserId(null);
-    setIsAuthOpen(false);
-    setLoginId('');
-    setPassword('');
-    setAuthError('');
-  };
-
+  const handleLogout = async () => {try{await auth.logout();setCurrentUser(null);setIsAuthOpen(false);setLoginId('');setPassword('');setAuthError('');await refreshClub();}catch(e){setNotice(e instanceof Error?e.message:'No se pudo cerrar sesión.');}};
   return (
     <div className="bg-clan-black min-h-screen text-white font-sans selection:bg-clan-magenta selection:text-white">
 
@@ -504,6 +353,8 @@ const App: React.FC = () => {
         )}
       </nav>
 
+      {mode==='preview'&&<div className="preview-ribbon">VISTA PREVIA LOCAL · Los cambios administrativos de prueba no se envían a Supabase.</div>}
+      {notice&&<div role="status" className="club-notice" onClick={()=>setNotice('')}>{notice}</div>}
       {/* Main Content */}
       <main>
         {viewMode !== 'dues' || role !== 'admin' ? (
@@ -547,13 +398,16 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* Reordered to match Nav: Home -> Team -> Matches -> MVP -> Gallery */}
+            <ClubSummary players={players} matches={matches} />
+            {/* Plantilla y gestión del club */}
             <div id="team-section">
               <TeamManager
                 players={players}
                 setPlayers={setPlayers}
                 canViewTactics={role !== 'public'}
                 onDeletePlayer={handleDeletePlayer}
+                canManage={role === 'admin'}
+                onSavePlayer={handleSavePlayer}
               />
             </div>
             <div id="matches-section">
@@ -574,9 +428,9 @@ const App: React.FC = () => {
                 onVote={handleVote}
               />
             )}
-            <div id="gallery-section"><GallerySection /></div>
+            <div id="gallery-section"><GallerySection role={role} /></div>
             {role === 'admin' && (
-              <AdminAccessPanel users={users} setUsers={setUsers} players={players} />
+              <AdminAccessPanel users={users} onSaveUser={handleSaveUser} players={players} />
             )}
           </>
         ) : (

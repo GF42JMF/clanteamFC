@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Match, Player, UserRole } from '../types';
-import { MapPin, Trophy, ArrowRight, Plus, Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Trophy, Plus, Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
 
 interface MatchesSectionProps {
   role: UserRole;
@@ -146,11 +146,9 @@ const MatchesSection: React.FC<MatchesSectionProps> = ({ role, players, matches,
          <div className="flex flex-col gap-6 mb-12 border-b border-white/10 pb-6">
              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                <h2 className="font-display text-4xl md:text-5xl text-white uppercase leading-none">
-                 Resultados <span className="text-clan-magenta">Recientes</span>
+                 Resultados <span className="text-clan-magenta">del Clan</span>
                </h2>
-               <button className="hidden md:flex items-center gap-2 text-clan-magenta font-bold uppercase tracking-[0.16em] text-sm hover:text-white transition-colors">
-                  Ver Calendario Completo <ArrowRight size={16}/>
-               </button>
+
              </div>
 
              <div className="flex flex-wrap items-center gap-4">

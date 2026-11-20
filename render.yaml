@@ -1,11 +1,27 @@
 services:
   - type: web
-    name: clanteamfc
-    env: static
-    buildCommand: npm run build
-    staticPublishPath: dist
+    name: clanteamfc-club
+    runtime: node
+    plan: free
+    branch: codex/club-original-2027
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm run build
+    startCommand: node server/index.mjs
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
     envVars:
-      - key: VITE_SUPABASE_URL
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
         value: https://qpraaostmojllbgfczox.supabase.co
-      - key: VITE_SUPABASE_ANON_KEY
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: CLAN_ADMIN_USERNAME
+        value: admin
+      - key: CLAN_ADMIN_EMAIL
+        sync: false
+      - key: CLAN_ADMIN_PASSWORD
         sync: false
