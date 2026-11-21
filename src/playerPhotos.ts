@@ -35,6 +35,10 @@ export const PLAYER_PHOTOS: Record<string, PlayerPhoto> = {
   '7': photo(12, mundialito('1-22-141'), 1080, 720, [433, 105, 235], [280, 95, 480]), // 8 · Gonzalo Ramos
   '2': photo(13, mundialito('8-24-5'), 1080, 720, [490, 110, 170], [335, 90, 480]), // 2 · Guillermo Fontes
   '8': photo(14, mundialito('7-19-80'), 1080, 720, [500, 140, 250], [340, 80, 480]), // 9 · Julián Rocha
+  '19': photo(15, mundialito('8-28-5'), 1080, 720, [475, 50, 190], [355, 25, 480]), // 80 · Matias Perez
+  'a975d4b4-0e00-4b1e-bae6-02cb579436ec': photo(16, '', 613, 408, [250, 10, 115], [80, 0, 320]), // 5 · Leandro Bonjour
+  '17': photo(17, mundialito('1-36-86'), 1079, 716, [630, 25, 195], [385, 15, 540]), // 30 · Gonzalo Jacques
+  '20': photo(18, mundialito('8-1-6'), 651, 432, [235, 20, 120], [130, 15, 300]), // 99 · Nahuel Martínez
 };
 
 export function withClubPhoto(player: Player): Player {
