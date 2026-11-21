@@ -1,11 +1,12 @@
 import {Match,Player,UserAccount} from '../types';
+import {withClubPhoto} from '../playerPhotos';
 export class ApiError extends Error { constructor(message:string,public status:number){super(message);} }
 export async function api<T>(path:string,options:RequestInit={}):Promise<T>{const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...options.headers},credentials:'same-origin'});const d=await r.json();if(!r.ok)throw new ApiError(d.error||'No se pudo completar la operación.',r.status);return d as T;}
 type Club={players:Player[];matches:Match[];source:string};let pending:Promise<Club>|null=null;
 export function invalidateClub(){pending=null;}
 const club=()=>pending??(pending=api<Club>('/api/club').catch(e=>{pending=null;throw e;}));
 export const getLocalMatches=():Match[]=>[];
-export const fetchPlayers=async()=> (await club()).players;
+export const fetchPlayers=async()=> (await club()).players.map(withClubPhoto);
 export const fetchMatches=async()=> (await club()).matches;
 export const upsertMatch=async(match:Match)=>{await api('/api/matches/'+encodeURIComponent(match.id),{method:'PUT',body:JSON.stringify(match)});invalidateClub();return true;};
 export const deleteMatch=async(id:string)=>{await api('/api/matches/'+encodeURIComponent(id),{method:'DELETE'});invalidateClub();return true;};

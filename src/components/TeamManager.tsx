@@ -4,6 +4,7 @@ import { ASSETS } from '../constants';
 import { Trash2, Pencil, User, Filter, ArrowUpDown, Shield, Swords, Footprints, Hand } from 'lucide-react';
 
 import PlayerEditor from './PlayerEditor';
+import PlayerPhoto from './PlayerPhoto';
 const TacticalBoard=React.lazy(()=>import('./TacticalBoard'));
 
 interface TeamManagerProps {
@@ -84,13 +85,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
         </div>
         
         <div className="relative w-12 h-12 rounded-full bg-neutral-800 overflow-hidden mx-3 border-2 border-white/10 group-hover:border-clan-magenta transition-colors shrink-0">
-          <img
-            src={player.image || ASSETS.players.default}
-            className="w-full h-full object-contain"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
-          />
+          <PlayerPhoto player={player} />
         </div>
 
         <div className="flex-1 min-w-0 pr-4">
@@ -234,7 +229,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
                     </div>
 
                     {/* 5. Player Image (Dual Layer for Fit) */}
-                    <div className="absolute top-16 right-0 left-0 bottom-32 z-10 flex items-center justify-center overflow-hidden">
+                    <div className="absolute top-16 right-0 left-0 z-10 aspect-[4/5] overflow-hidden">
                        
                        {/* Background Blur Layer to fill space if image is horizontal */}
                        <img
@@ -247,15 +242,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({ players, setPlayers, canViewT
                         aria-hidden="true"
                        />
 
-                       {/* Foreground Main Image (Contain + Bottom) */}
-                       <img 
-                          src={cardImageSrc}
-                          onError={() => setCardImageSrc(ASSETS.players.default)}
-                          alt={selectedPlayer.name}
-                          className="relative w-full h-full object-contain object-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                       />
+                       <PlayerPhoto player={selectedPlayer} variant="card"
+                         className="drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105 z-10" />
                     </div>
 
                     {/* 6. Big Jersey Number (Floating Left) */}

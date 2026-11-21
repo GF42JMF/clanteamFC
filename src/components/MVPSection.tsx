@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ASSETS } from '../constants';
+import PlayerPhoto from './PlayerPhoto';
 import { Match, Player, UserAccount, UserRole } from '../types';
 import { Trophy, Timer } from 'lucide-react';
 
@@ -118,14 +118,7 @@ const MVPSection: React.FC<MVPSectionProps> = ({ role, currentUser, players, mat
                     }`}
                   >
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
-                      <img
-                        src={player.image || ASSETS.players.default}
-                        alt={player.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
-                      />
+                      <PlayerPhoto player={player} />
                     </div>
                     <div>
                       <div className="text-white text-sm font-bold">{player.name}</div>

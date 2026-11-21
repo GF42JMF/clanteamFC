@@ -5,6 +5,7 @@ import { Users, RefreshCw, ChevronRight, Shield, User, X, Trash2, Zap, LayoutTem
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import {fetchTactics,saveTactics} from '../services/api';
+import PlayerPhoto from './PlayerPhoto';
 
 interface TacticalBoardProps {
   players: Player[];
@@ -464,15 +465,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players, canManage }) => 
                   `}>
                      {player ? (
                        <>
-                         {/* Enhanced Image for Face Focus - ADDED CROSSORIGIN */}
-                         <img 
-                            src={player.image || ASSETS.players.default} 
-                            referrerPolicy="no-referrer"
-                            loading="lazy"
-                            className="w-full h-full object-cover object-top transform scale-110 pointer-events-none" 
-                            onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
-                            alt={player.name}
-                         />
+                         <PlayerPhoto player={player} />
                          
                          {/* Remove Button (Mini X) - Hidden during PDF generation via css or just visual filtering */}
                          <button 
@@ -573,14 +566,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({ players, canManage }) => 
                       </div>
                       
                       <div className="w-10 h-10 rounded-full bg-black overflow-hidden border border-white/10">
-                         {/* ADDED CROSSORIGIN HERE TOO */}
-                         <img
-                           src={player.image || ASSETS.players.default}
-                           referrerPolicy="no-referrer"
-                           loading="lazy"
-                           className="w-full h-full object-cover object-top"
-                           onError={(e) => { e.currentTarget.src = ASSETS.players.default; }}
-                         />
+                         <PlayerPhoto player={player} />
                       </div>
                       
                       <div className="flex-1 min-w-0">
