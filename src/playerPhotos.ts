@@ -37,9 +37,10 @@ export const PLAYER_PHOTOS: Record<string, PlayerPhoto> = {
   '8': photo(14, mundialito('7-19-80'), 1080, 720, [500, 140, 250], [340, 80, 480]), // 9 · Julián Rocha
   '19': photo(15, mundialito('8-28-5'), 1080, 720, [475, 50, 190], [355, 25, 480]), // 80 · Matias Perez
   'a975d4b4-0e00-4b1e-bae6-02cb579436ec': photo(16, '', 613, 408, [250, 10, 115], [80, 0, 320]), // 5 · Leandro Bonjour
-  '17': photo(17, mundialito('1-36-86'), 1079, 716, [630, 25, 195], [385, 15, 540]), // 30 · Gonzalo Jacques
+  '17': photo(21, mundialito('1-36-86'), 1080, 720, [295, 155, 170], [210, 155, 320]), // 30 · Gonzalo Jacques
   '20': photo(18, mundialito('8-1-6'), 651, 432, [235, 20, 120], [130, 15, 300]), // 99 · Nahuel Martínez
   '9': photo(19, mundialito('1-23-141'), 1440, 1912, [735, 180, 400], [450, 160, 800]), // 10 · Nicolás López
+  '4': photo(20, 'https://ui-avatars.com/api/?background=C2185B&color=fff&size=512&font-size=0.4', 1440, 1912, [980, 240, 450], [880, 220, 560]), // 4 · Gastón Pirotto (a la derecha)
 };
 
 export function withClubPhoto(player: Player): Player {
